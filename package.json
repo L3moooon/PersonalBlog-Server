@@ -1,0 +1,21 @@
+{
+  "name": "personblog-serve",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "nodemon src/index.js",
+    "test": "jest",
+    "dev": "nodemon src/index.js"
+  },
+  "author": "宵时雨",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "express": "^4.21.2",
+    "glob": "^11.0.0",
+    "mysql": "^2.18.1",
+    "nodemon": "^3.1.9"
+  }
+}
