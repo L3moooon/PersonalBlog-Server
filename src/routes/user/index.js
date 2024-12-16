@@ -2,8 +2,8 @@ const db = require('../../../config/db')
 const express = require('express');
 const router = express.Router();
 
-router.get('/article', (req, res) => {
-  const sqlString = 'SELECT * FROM article'
+router.post('/info', (req, res) => {
+  const sqlString = 'SELECT * FROM user'
   db.query(sqlString, (err, result) => {
     console.log(result);
     if (err) {
