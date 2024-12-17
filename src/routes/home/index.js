@@ -5,7 +5,7 @@ const router = express.Router();
 router.get('/article', (req, res) => {
   const sqlString = 'SELECT * FROM article'
   db.query(sqlString, (err, result) => {
-    console.log(result);
+    // console.log(result);
     if (err) {
       return res.send({ status: 1, message: err.message })
     }

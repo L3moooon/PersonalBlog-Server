@@ -12,7 +12,7 @@ app.use(bodyParser.urlencoded({ extended: false }))
 const ROOT_PATH = path.join(__dirname, 'routes/**/*.js').replace(/\\/g, '/')
 const routeFiles = glob.sync(ROOT_PATH);
 routeFiles.forEach((file) => {
-  console.log(file);
+  // console.log(file);
   const route = require(file);
   const basePath = path.relative(path.join(__dirname, 'routes'), path.dirname(file));
   app.use(`/${basePath}`, route)
