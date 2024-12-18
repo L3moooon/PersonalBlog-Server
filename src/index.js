@@ -23,5 +23,5 @@ app.get('/', (req, res) => {
 });
 
 app.listen(3001, () => {
-  console.log('serve is running on http://127.0.0.1:3001')
+  console.log('Server is running on http://127.0.0.1:3001')
 })
