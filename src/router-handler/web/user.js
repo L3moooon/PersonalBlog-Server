@@ -1,4 +1,4 @@
-const db = require('../../config/db');
+const db = require('../../../config/db');
 const sqlString1 = 'SELECT * FROM user WHERE id=1';
 const sqlString2 = 'SELECT * FROM user_saying WHERE user_id=1';
 const sqlString3 = 'SELECT * FROM user_url WHERE user_id=1';
@@ -56,7 +56,6 @@ exports.info = async (req, res) => {
         processData.url.push({ 'name': element.name, 'address': element.address });
       });
     }
-
     return res.json({ status: 0, message: '请求成功！', data: processData });
   } catch (err) {
     console.error(err);

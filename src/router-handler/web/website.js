@@ -1,4 +1,4 @@
-const db = require('../../config/db');
+const db = require('../../../config/db');
 const sqlString = 'SELECT * FROM website_info';
 
 exports.info = async (req, res) => {

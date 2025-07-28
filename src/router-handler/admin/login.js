@@ -1,13 +1,17 @@
-const db = require('../../config/db');
+const db = require('../../../config/db');
+const IP2Region = require('ip2region').default;
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+
+const query = new IP2Region();
 const secretKey = crypto.randomBytes(32).toString('hex');
 
+//用户登录
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   // 输入验证
   if (!email || !password) {
-    return res.status(400).json({ status: 0, message: '邮箱和密码是必需的' });
+    return res.json({ status: 0, message: '邮箱和密码是必需的' });
   }
   try {
     const sql = 'SELECT * FROM admin_account WHERE email = ? AND password = ?';
@@ -17,18 +21,31 @@ exports.login = async (req, res) => {
         return handleError(res, err);
       }
       if (rows.length === 0) {
-        return res.status(401).json({ status: 0, message: '用户名或密码错误' });
+        return res.json({ status: 0, message: '用户名或密码错误' });
       }
-
       const token = jwt.sign({ email }, secretKey, { expiresIn: '168h' });
-      res.json({ status: 1, token, name: rows[0].name });
+      //登录成功时获取ip地址
+      const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+      const ipAddress = JSON.stringify(query.search(ip));
+      //将ip数据添加到数据库
+      const sqlString = 'UPDATE admin_account SET ip = ?, location = ?,last_login_time = ? WHERE email = ?';
+      const time = Date.now
+      db.query(sqlString, [ip, ipAddress, time, email], (err2) => {
+        if (err) {
+          return handleError(res, err2);
+        }
+        res.json({ status: 1, token, name: rows[0].name });
+      });
     });
+
+
   } catch (error) {
     handleError(res, error);
   }
+
 };
 
-
+//用户注册
 exports.register = async (req, res) => {
   const { email, password, name } = req.body;
   try {
@@ -39,22 +56,23 @@ exports.register = async (req, res) => {
         return handleError(res, err);
       }
       if (existingRows.length > 0) {
-        return res.status(409).json({ status: 0, message: '该邮箱已被注册' });
+        return res.json({ status: 0, message: '该邮箱已被注册' });
       }
-
       // 插入新用户
-      const insertSql = 'INSERT INTO admin_account (email, password, name) VALUES (?, ?, ?)';
-      db.query(insertSql, [email, password, name], (err, result) => {
+      const insertSql = 'INSERT INTO admin_account (email, password, name, permission) VALUES (?, ?, ?, ?)';
+      db.query(insertSql, [email, password, name, 1], (err, result) => {
         if (err) {
           return handleError(res, err);
         }
-        res.status(201).json({ status: 1, message: '注册成功' });
+        res.json({ status: 1, message: '注册成功' });
       });
     });
   } catch (error) {
     handleError(res, error);
   }
 };
+//忘记密码
+
 
 // 统一错误处理函数
 const handleError = (res, error) => {
