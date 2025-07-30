@@ -11,12 +11,14 @@
   "author": "宵时雨",
   "license": "ISC",
   "dependencies": {
+    "ali-oss": "^6.23.0",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
     "glob": "^11.0.0",
     "ip2region": "^2.3.0",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^2.0.2",
     "mysql2": "^3.13.0",
     "nodemon": "^3.1.9"
   }

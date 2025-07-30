@@ -17,9 +17,9 @@ routeFiles.forEach((file) => {
   app.use(`/${basePath}`, route)
 });
 
-app.get('/', (req, res) => {
-  res.send('根路径');
-});
+// app.get('/', (req, res) => {
+//   res.send('根路径');
+// });
 
 app.listen(3001, () => {
   console.log('Server is running on http://127.0.0.1:3001')

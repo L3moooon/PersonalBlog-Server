@@ -1,5 +1,4 @@
 const db = require('../../../config/db');
-const sqlString = 'SELECT * FROM website_info';
 
 exports.info = async (req, res) => {
 
@@ -11,6 +10,7 @@ exports.info = async (req, res) => {
   //   common_num: Number,
   //   last_activate: String
   // }
+  const sqlString = 'SELECT * FROM website_info';
   db.query(sqlString, (err, result) => {
     if (err) {
       return res.send({ status: 1, message: err.message })

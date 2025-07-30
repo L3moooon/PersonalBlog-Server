@@ -2,6 +2,7 @@
 node_modules
 /dist
 /config/db
+/config/oss
 
 # local env files
 .env.local
