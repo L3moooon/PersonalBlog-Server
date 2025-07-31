@@ -3,7 +3,7 @@ const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
 const articleHandler = require('../../router-handler/public/article')
-const uploadhandler = require('../../router-handler/public/upload');
+const uploadHandler = require('../../router-handler/public/upload');
 
 const router = express.Router();
 
@@ -41,6 +41,6 @@ const upload = multer({
 });
 
 router.post('/getAllArticle', articleHandler.getAllArticle);//通用获取所有文章列表
-router.post('/upload', upload.single('file'), uploadhandler.upload);//通用上传
+router.post('/upload', upload.single('file'), uploadHandler.upload);//通用上传
 
 module.exports = router;

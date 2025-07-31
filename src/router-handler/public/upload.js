@@ -27,23 +27,31 @@ exports.upload = async (req, res) => {
     // 删除本地临时文件
     fs.unlinkSync(localFilePath);
     // 返回上传结果，包含文件URL
-    const sqlString = 'UPDATE user SET portrait=? WHERE id=1'
-    db.query(sqlString, [result.url], (err, row) => {
-      if (err) {
-        return res.send({ status: 0, err })
+    return res.json({
+      status: 1,
+      message: '文件上传成功',
+      data: {
+        name: req.file.originalname,
+        url: result.url,
       }
-      return res.json({
-        status: 1,
-        message: '文件上传成功',
-        data: {
-          name: req.file.originalname,
-          url: result.url,
-          // path: result.name,
-          // size: req.file.size,
-          // type: req.file.mimetype
-        }
-      });
-    })
+    });
+    // const sqlString = 'UPDATE user SET portrait=? WHERE id=1'
+    // db.query(sqlString, [result.url], (err, row) => {
+    //   if (err) {
+    //     return res.send({ status: 0, err })
+    //   }
+    //   return res.json({
+    //     status: 1,
+    //     message: '文件上传成功',
+    //     data: {
+    //       name: req.file.originalname,
+    //       url: result.url,
+    //       // path: result.name,
+    //       // size: req.file.size,
+    //       // type: req.file.mimetype
+    //     }
+    //   });
+    // })
 
   } catch (error) {
     console.error('上传失败:', error);
