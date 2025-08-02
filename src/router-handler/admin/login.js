@@ -59,8 +59,8 @@ exports.register = async (req, res) => {
         return res.json({ status: 0, message: '该邮箱已被注册' });
       }
       // 插入新用户
-      const insertSql = 'INSERT INTO admin_account (email, password, name, permission) VALUES (?, ?, ?, ?)';
-      db.query(insertSql, [email, password, name, 1], (err, result) => {
+      const insertSql = 'INSERT INTO admin_account (email, password, name) VALUES (?, ?, ?)';
+      db.query(insertSql, [email, password, name], (err, result) => {
         if (err) {
           return handleError(res, err);
         }
