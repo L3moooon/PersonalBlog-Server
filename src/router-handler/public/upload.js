@@ -2,7 +2,6 @@ const OSS = require('ali-oss')
 const fs = require('fs');
 const path = require('path');
 const ossConfig = require('../../../config/oss')
-const db = require('../../../config/db')
 
 // 初始化OSS客户端
 const client = new OSS(ossConfig)
@@ -35,24 +34,6 @@ exports.upload = async (req, res) => {
         url: result.url,
       }
     });
-    // const sqlString = 'UPDATE user SET portrait=? WHERE id=1'
-    // db.query(sqlString, [result.url], (err, row) => {
-    //   if (err) {
-    //     return res.send({ status: 0, err })
-    //   }
-    //   return res.json({
-    //     status: 1,
-    //     message: '文件上传成功',
-    //     data: {
-    //       name: req.file.originalname,
-    //       url: result.url,
-    //       // path: result.name,
-    //       // size: req.file.size,
-    //       // type: req.file.mimetype
-    //     }
-    //   });
-    // })
-
   } catch (error) {
     console.error('上传失败:', error);
     res.status(500).json({

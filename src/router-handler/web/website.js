@@ -1,5 +1,6 @@
 const db = require('../../../config/db');
 
+//获取网站运转信息
 exports.info = async (req, res) => {
   const sqlString = 'SELECT * FROM website_info';
   db.query(sqlString, (err, result) => {

@@ -8,7 +8,6 @@ exports.getAllArticle = async (req, res) => {
       return res.send({ status: 0, message: err.message })
     }
     if (result.length > 0) {
-      console.log(result);
       result.forEach(v => {
         if (v.tag && v.tag.length > 0) {
           v.tag = v.tag.split(',')
@@ -23,7 +22,7 @@ exports.article = async (req, res) => {
   try {
     const { id, title, cover_img, abstract, content, status, tag } = req.body
     if (id) {//修改文章
-      const sqlString1 = 'UPDATE article SET title=?,cover_img=?,abstract=?,content=?,status=? WHERE id=?'
+      const sqlString1 = 'UPDATE article SET title = ?, cover_img = ?, abstract = ?,content = ?, status = ? WHERE id = ?'
       await query(sqlString1, [title, cover_img, abstract, content, status, id])
 
       if (tag && tag.length > 0) {
@@ -48,7 +47,6 @@ exports.article = async (req, res) => {
   } catch (error) {
     return res.send({ status: 0, message: error.message });
   }
-
 }
 
 //更改文章显隐状态
@@ -65,7 +63,6 @@ exports.changeStatus = async (req, res) => {
 //删除文章
 exports.delArticle = async (req, res) => {
   const { id } = req.body
-  console.log(id);
   const sqlString = 'DELETE FROM article WHERE id=?'
   db.query(sqlString, [id], (err, result) => {
     if (err) {
@@ -93,26 +90,27 @@ exports.getArticle = async (req, res) => {
 exports.getAllComments = async (req, res) => {
   try {
     const { id } = req.body
-    const sqlString = 'SELECT * FROM comment WHERE id=?'
+    const sqlString = 'SELECT c.id, c.article_id, c.user_id, c.parent_id, c.content, c.like_count, c.comment_date, wa.name AS reply_name, wa.portrait AS reply_portrait,pwa.name AS parent_name FROM comment c JOIN web_account wa ON c.user_id = wa.id LEFT JOIN comment pc ON c.parent_id = pc.id LEFT JOIN web_account pwa ON pc.user_id = pwa.id WHERE c.article_id = ?'
     const result = await query(sqlString, [id])
     return res.json({ status: 1, message: '请求成功！', data: result })
   } catch (error) {
-    return res.send({ status: 0, message: err.message })
+    return res.send({ status: 0, message: error.message })
   }
+}
+//获取评论管理面板
+exports.getCommentPanel = async (req, res) => {
 
 }
 //发表或回复评论
 exports.comment = async (req, res) => {
-  const { id } = req.body
-  const sqlString = 'INSERT INTO comment(article_id,user_id,parent_id,content,is_anonymous) VALUES(?,?,?,?,?)'
-  db.query(sqlString, [id], (err, result) => {
-    if (err) {
-      return res.send({ status: 0, message: err.message })
-    }
-    if (result.length > 0) {
-      return res.json({ status: 1, message: '请求成功！', data: result })
-    }
-  })
+  try {
+    const { article_id, user_id, parent_id, content } = req.body
+    const sqlString = 'INSERT INTO comment(article_id,user_id,parent_id,content) VALUES(?,?,?,?)'
+    await query(sqlString, [article_id, user_id, parent_id, content])
+    return res.send({ status: 1, message: '请求成功！' })
+  } catch (error) {
+    return res.send({ status: 0, message: error.message })
+  }
 }
 //删除评论
 exports.delComment = async (req, res) => {

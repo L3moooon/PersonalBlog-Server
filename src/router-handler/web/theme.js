@@ -1,6 +1,6 @@
 const { query, getConnection } = require('../../../config/db-util')
 
-//获取网站相关信息
+//获取网站主题相关信息
 exports.theme = async (req, res) => {
   try {
     const sqlString1 = 'SELECT * FROM user WHERE id=1';
