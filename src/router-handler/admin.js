@@ -1,6 +1,7 @@
-const db = require('../../../config/db');
-const { query } = require('../../../config/db-util/index')
-exports.getAllUserList = async (req, res) => {
+//用户管理
+const { query } = require('@config/db-util/index')
+//获取所有用户
+exports.getAdminList = async (req, res) => {
   try {
     const sqlString = "SELECT id, email, create_time, last_login_time, ip, location FROM admin_account "
     const result = await query(sqlString)

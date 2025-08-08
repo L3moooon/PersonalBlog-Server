@@ -1,3 +1,6 @@
+// 必须放在文件最顶部
+require('module-alias/register')
+
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')

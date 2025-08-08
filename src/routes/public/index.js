@@ -2,8 +2,9 @@ const express = require('express');
 const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
-const articleHandler = require('../../router-handler/public/article')
-const uploadHandler = require('../../router-handler/public/upload');
+
+const articleHandler = require('@handler/article')
+const uploadHandler = require('@handler/upload');
 
 const router = express.Router();
 

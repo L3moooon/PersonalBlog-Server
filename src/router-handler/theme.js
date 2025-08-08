@@ -1,4 +1,4 @@
-const { query, getConnection } = require('../../../config/db-util')
+const { query, getConnection } = require('@config/db-util')
 
 //获取网站主题相关信息
 exports.theme = async (req, res) => {

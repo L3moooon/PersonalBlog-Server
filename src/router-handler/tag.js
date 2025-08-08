@@ -1,5 +1,6 @@
-const db = require('../../../config/db')
+const db = require('@config/db')
 
+//新增标签
 exports.addTag = async (req, res) => {
   const { name } = req.body
   const sqlString = "INSERT INTO tag(tag_name) VALUES (?) "
@@ -10,6 +11,7 @@ exports.addTag = async (req, res) => {
     return res.send({ status: 1, message: '添加成功' })
   })
 }
+//删除标签
 exports.delTag = async (req, res) => {
   const { id } = req.body
   const sqlString = "DELETE FROM tag WHERE id=?"

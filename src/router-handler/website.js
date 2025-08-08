@@ -1,4 +1,4 @@
-const db = require('../../../config/db');
+const db = require('../../config/db');
 
 //获取网站运转信息
 exports.info = async (req, res) => {

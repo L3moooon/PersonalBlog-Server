@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const userHandler = require('../../../router-handler/web/user')
+const userHandler = require('@handler/user')
 
 router.post('/visited', userHandler.visited);
 module.exports = router;

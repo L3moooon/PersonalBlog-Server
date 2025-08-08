@@ -1,8 +1,8 @@
-const db = require('../../../config/db');
-const { query } = require('../../../config/db-util');
+const db = require('@config/db');
+const { query } = require('@config/db-util');
 //获取所有文章
 exports.getAllArticle = async (req, res) => {
-  const sqlString = "SELECT a.*,  GROUP_CONCAT(t.tag_name SEPARATOR ', ') AS tag FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id GROUP BY a.id; "
+  const sqlString = "SELECT a.*,  GROUP_CONCAT(t.id, ':',t.tag_name SEPARATOR ', ') AS tag FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id GROUP BY a.id; "
   db.query(sqlString, (err, result) => {
     if (err) {
       return res.send({ status: 0, message: err.message })
@@ -10,7 +10,12 @@ exports.getAllArticle = async (req, res) => {
     if (result.length > 0) {
       result.forEach(v => {
         if (v.tag && v.tag.length > 0) {
-          v.tag = v.tag.split(',')
+          const tagArray = v.tag.split(',')
+          // 转换为[{id,name}]格式
+          v.tag = tagArray.map(tag => {
+            const [id, name] = tag.split(':');
+            return { id: parseInt(id), name };
+          });
         }
       })
     }
@@ -27,9 +32,11 @@ exports.article = async (req, res) => {
 
       if (tag && tag.length > 0) {
         const tagValues = tag.map(tagId => [id, tagId]);
+        // 先删除文章的所有tag再批量插入
         const sqlString2 = "DELETE FROM article_tag_relation WHERE article_id=?"
         const sqlString3 = 'INSERT INTO article_tag_relation(article_id, tag_id) VALUES ?';
         await query(sqlString2, [id])
+        console.log([tagValues]);
         await query(sqlString3, [tagValues]);//批量插入
       }
       return res.send({ status: 1, message: '修改成功！' });
@@ -99,6 +106,13 @@ exports.getAllComments = async (req, res) => {
 }
 //获取评论管理面板
 exports.getCommentPanel = async (req, res) => {
+  try {
+    const sqlString = "SELECT c.article_id, a.title,c.user_id,u1.name AS user_name,c.parent_id,u2.name AS  reply_user_name,c.content,c.comment_date,c.edit_date,c.like_count,c.unlike_count FROM comment c JOIN article a ON c.article_id = a.id JOIN web_account u1 ON c.user_id = u1.id LEFT JOIN web_account u2 ON c.parent_id = u2.id; "
+    const result = await query(sqlString)
+    return res.json({ status: 1, message: '请求成功！', data: result })
+  } catch (error) {
+    return res.send({ status: 0, message: error.message })
+  }
 
 }
 //发表或回复评论

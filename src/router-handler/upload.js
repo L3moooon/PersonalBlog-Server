@@ -1,7 +1,7 @@
 const OSS = require('ali-oss')
 const fs = require('fs');
 const path = require('path');
-const ossConfig = require('../../../config/oss')
+const ossConfig = require('@config/oss')
 
 // 初始化OSS客户端
 const client = new OSS(ossConfig)

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const handler = require('../../../router-handler/public/article')
+const handler = require('@handler/article')
 
 router.post('/getArticle', handler.getArticle);
 router.post('/getComment', handler.getAllComments);
