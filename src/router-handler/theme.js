@@ -3,9 +3,9 @@ const { query, getConnection } = require('@config/db-util')
 //获取网站主题相关信息
 exports.theme = async (req, res) => {
   try {
-    const sqlString1 = 'SELECT * FROM user WHERE id=1';
-    const sqlString2 = 'SELECT * FROM user_saying WHERE user_id=1';
-    const sqlString3 = 'SELECT * FROM user_url WHERE user_id=1';
+    const sqlString1 = 'SELECT * FROM admin WHERE id=1';
+    const sqlString2 = 'SELECT * FROM admin_saying WHERE user_id=1';
+    const sqlString3 = 'SELECT * FROM admin_url WHERE user_id=1';
     const sqlString4 = 'SELECT * FROM web_bg_img';
     const queryPromises = [query(sqlString1), query(sqlString2), query(sqlString3), query(sqlString4)]
     const [result1, result2, result3, result4] = await Promise.all(queryPromises);
@@ -39,13 +39,13 @@ exports.modifyTheme = async (req, res) => {
     const _url = url.map(v => [1, v.name, v.address])//调整url的格式
     const _saying = saying.map(v => [1, v])
     const _bg_img = bg_img.map(img => [img]);
-    const delString1 = "DELETE FROM user_saying;"
-    const delString2 = "DELETE FROM user_url;"
+    const delString1 = "DELETE FROM admin_saying;"
+    const delString2 = "DELETE FROM admin_url;"
     const delString3 = "DELETE FROM web_bg_img;"
     await Promise.all([query(delString1), query(delString2), query(delString3)])
-    const sqlString1 = "UPDATE user SET nickname=?,portrait=?,motto=?,welcome=? WHERE id=1"//更新user表
-    const sqlString2 = "INSERT INTO user_saying(user_id,saying) VALUES?; "//批量更新user_saying表
-    const sqlString3 = " INSERT INTO user_url(user_id,name,address) VALUES?;"//批量更新use_url表
+    const sqlString1 = "UPDATE admin SET nickname=?,portrait=?,motto=?,welcome=? WHERE id=1"//更新user表
+    const sqlString2 = "INSERT INTO admin_saying(user_id,saying) VALUES?; "//批量更新user_saying表
+    const sqlString3 = " INSERT INTO admin_url(user_id,name,address) VALUES?;"//批量更新use_url表
     const sqlString4 = " INSERT INTO web_bg_img(img_url) VALUES?;"//批量更新web_bg_img表
     await Promise.all([
       query(sqlString1, [nickname, portrait, motto, welcome]),

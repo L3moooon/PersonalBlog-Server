@@ -6,7 +6,7 @@ const crypto = require('crypto');
 const query = new IP2Region();
 const secretKey = crypto.randomBytes(32).toString('hex');
 
-//用户登录
+//后台管理员登录
 exports.login = async (req, res) => {
   const { email, password } = req.body;
   // 输入验证
@@ -37,15 +37,12 @@ exports.login = async (req, res) => {
         res.json({ status: 1, token, name: rows[0].name });
       });
     });
-
-
   } catch (error) {
     handleError(res, error);
   }
-
 };
 
-//用户注册
+//后台管理员注册
 exports.register = async (req, res) => {
   const { email, password, name } = req.body;
   try {

@@ -23,6 +23,7 @@ exports.delTag = async (req, res) => {
   })
 }
 
+//获取标签列表
 exports.getAllTags = async (req, res) => {
   const sqlString = "SELECT * FROM tag"
   db.query(sqlString, (err, row) => {
