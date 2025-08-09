@@ -1,12 +1,10 @@
 const db = require('@config/db');
 const { query } = require('@config/db-util');
-//获取所有文章
+//后台获取所有文章
 exports.getAllArticle = async (req, res) => {
-  const sqlString = "SELECT a.*,  GROUP_CONCAT(t.id, ':',t.tag_name SEPARATOR ', ') AS tag FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id GROUP BY a.id; "
-  db.query(sqlString, (err, result) => {
-    if (err) {
-      return res.send({ status: 0, message: err.message })
-    }
+  try {
+    const sqlString = "SELECT a.*, GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,(SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id GROUP BY a.id;"
+    const result = await query(sqlString)
     if (result.length > 0) {
       result.forEach(v => {
         if (v.tag && v.tag.length > 0) {
@@ -20,7 +18,10 @@ exports.getAllArticle = async (req, res) => {
       })
     }
     return res.json({ status: 1, message: '请求成功！', data: result })
-  })
+  } catch (error) {
+    return res.send({ status: 0, message: err.message })
+
+  }
 }
 //新增或修改文章
 exports.article = async (req, res) => {
@@ -67,6 +68,17 @@ exports.changeStatus = async (req, res) => {
     return res.send({ status: 0, message: error.message });
   }
 }
+//更改文章置顶状态
+exports.changeTop = async (req, res) => {
+  try {
+    const { id, top } = req.body
+    const sqlString1 = 'UPDATE article SET top=? WHERE id=?'
+    await query(sqlString1, [top, id])
+    return res.send({ status: 1, message: '修改成功！' });
+  } catch (error) {
+    return res.send({ status: 0, message: error.message });
+  }
+}
 //删除文章
 exports.delArticle = async (req, res) => {
   const { id } = req.body
@@ -92,41 +104,4 @@ exports.getArticle = async (req, res) => {
       return res.json({ status: 1, message: '请求成功！', data: result[0] })
     }
   })
-}
-//获取文章所有评论
-exports.getAllComments = async (req, res) => {
-  try {
-    const { id } = req.body
-    const sqlString = 'SELECT c.id, c.article_id, c.user_id, c.parent_id, c.content, c.like_count, c.comment_date, wa.name AS reply_name, wa.portrait AS reply_portrait,pwa.name AS parent_name FROM comment c JOIN web_account wa ON c.user_id = wa.id LEFT JOIN comment pc ON c.parent_id = pc.id LEFT JOIN web_account pwa ON pc.user_id = pwa.id WHERE c.article_id = ?'
-    const result = await query(sqlString, [id])
-    return res.json({ status: 1, message: '请求成功！', data: result })
-  } catch (error) {
-    return res.send({ status: 0, message: error.message })
-  }
-}
-//获取评论管理面板
-exports.getCommentPanel = async (req, res) => {
-  try {
-    const sqlString = "SELECT c.article_id, a.title,c.user_id,u1.name AS user_name,c.parent_id,u2.name AS  reply_user_name,c.content,c.comment_date,c.edit_date,c.like_count,c.unlike_count FROM comment c JOIN article a ON c.article_id = a.id JOIN web_account u1 ON c.user_id = u1.id LEFT JOIN web_account u2 ON c.parent_id = u2.id; "
-    const result = await query(sqlString)
-    return res.json({ status: 1, message: '请求成功！', data: result })
-  } catch (error) {
-    return res.send({ status: 0, message: error.message })
-  }
-
-}
-//发表或回复评论
-exports.comment = async (req, res) => {
-  try {
-    const { article_id, user_id, parent_id, content } = req.body
-    const sqlString = 'INSERT INTO comment(article_id,user_id,parent_id,content) VALUES(?,?,?,?)'
-    await query(sqlString, [article_id, user_id, parent_id, content])
-    return res.send({ status: 1, message: '请求成功！' })
-  } catch (error) {
-    return res.send({ status: 0, message: error.message })
-  }
-}
-//删除评论
-exports.delComment = async (req, res) => {
-  const { id } = req.body
 }

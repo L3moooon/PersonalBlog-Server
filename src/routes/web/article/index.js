@@ -1,10 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const handler = require('@handler/article')
+const articleHandler = require('@handler/article')
+const commentHandler = require('@handler/comment')
 
-router.post('/getArticle', handler.getArticle);
-router.post('/getComment', handler.getAllComments);
-router.post('/comment', handler.comment);
-router.post('/delComment', handler.delComment);
+router.post('/getArticle', articleHandler.getArticle);
+router.post('/getComment', commentHandler.getAllComments);
+router.post('/comment', commentHandler.comment);
+router.post('/delComment', commentHandler.delComment);
 
 module.exports = router;
