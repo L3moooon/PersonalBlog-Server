@@ -19,6 +19,6 @@ routeFiles.forEach((file) => {
   app.use(`/${basePath}`, route)
 });
 
-app.listen(3001, () => {
-  console.log('Server is running on http://127.0.0.1:3001')
+app.listen(3000, () => {
+  console.log('Server is running on http://127.0.0.1:3000')
 })
