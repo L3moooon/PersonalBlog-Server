@@ -1,4 +1,4 @@
-//用户管理
+//后台用户管理
 const { query } = require('@config/db-util/index')
 //获取所有用户
 exports.getAdminList = async (req, res) => {

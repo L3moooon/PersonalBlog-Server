@@ -1,3 +1,4 @@
+//文章评论
 const { query } = require('@config/db-util');
 //获取文章所有评论
 exports.getAllComments = async (req, res) => {

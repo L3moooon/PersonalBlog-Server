@@ -1,7 +1,7 @@
 const db = require('../../config/db');
 const { query, getConnection } = require('@config/db-util')
 
-// 网站上线时间戳（秒级，需与实际一致）
+// 网站上线时间戳（秒级）
 const ESTABLISHING_DATE = 1754707126;
 
 // 获取网站运转信息
@@ -115,4 +115,30 @@ exports.modifyTheme = async (req, res) => {
       message: '更新失败'
     });
   }
+};
+
+//获取首页文章列表
+exports.getHomeArticle = async (req, res) => {
+  try {
+    const sqlString = "SELECT a.*, GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,(SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id WHERE a.status = 1 GROUP BY a.id ORDER BY a.top DESC, a.last_edit_date DESC;"
+    const result = await query(sqlString)
+    if (result.length > 0) {
+      result.forEach(v => {
+        if (v.tag && v.tag.length > 0) {
+          const tagArray = v.tag.split(',')
+          // 转换为[{id,name}]格式
+          v.tag = tagArray.map(tag => {
+            const [id, name] = tag.split(':');
+            return { id: parseInt(id), name };
+          });
+        }
+      })
+    }
+    return res.json({ status: 1, message: '请求成功！', data: result })
+  } catch (error) {
+    return res.send({ status: 0, message: error.message })
+  }
 }
+//获取推荐文章
+exports.getRecommendArticle = async (req, res) => { }
+

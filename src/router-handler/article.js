@@ -1,3 +1,4 @@
+//后台文章管理
 const db = require('@config/db');
 const { query } = require('@config/db-util');
 //后台获取所有文章
@@ -19,8 +20,7 @@ exports.getAllArticle = async (req, res) => {
     }
     return res.json({ status: 1, message: '请求成功！', data: result })
   } catch (error) {
-    return res.send({ status: 0, message: err.message })
-
+    return res.send({ status: 0, message: error.message })
   }
 }
 //新增或修改文章
@@ -30,7 +30,6 @@ exports.article = async (req, res) => {
     if (id) {//修改文章
       const sqlString1 = 'UPDATE article SET title = ?, cover_img = ?, abstract = ?,content = ?, status = ? WHERE id = ?'
       await query(sqlString1, [title, cover_img, abstract, content, status, id])
-
       if (tag && tag.length > 0) {
         const tagValues = tag.map(tagId => [id, tagId]);
         // 先删除文章的所有tag再批量插入
@@ -104,4 +103,21 @@ exports.getArticle = async (req, res) => {
       return res.json({ status: 1, message: '请求成功！', data: result[0] })
     }
   })
+
 }
+//更新文章访问量
+exports.view = async (req, res) => {
+  try {
+    const { id } = req.body
+    const sqlString = 'UPDATE article SET view=view+1 WHERE id=?'
+    await query(sqlString, [id])
+    return res.json({ status: 1, message: '请求成功！' })
+  } catch (error) {
+    return res.send({ status: 0, message: error.message })
+  }
+
+}
+//更新文章点赞量
+// exports.view = async (req, res) => {
+//   //同一用户只能点赞一次
+// }

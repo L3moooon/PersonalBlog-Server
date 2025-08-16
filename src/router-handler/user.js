@@ -1,3 +1,4 @@
+//游客
 const { query } = require('@config/db-util/index');
 const IP2Region = require('ip2region').default;
 const IPquery = new IP2Region();
