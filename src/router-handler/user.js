@@ -19,8 +19,8 @@ exports.visited = async (req, res) => {
       const oneHourAgo = new Date(new Date().getTime() - 60 * 60 * 1000);
       const lastLoginTime = result[0].last_login_time;
       let count = lastLoginTime > oneHourAgo ? result[0].visited_count + 1 : result[0].visited_count
-      const sqlString1 = "UPDATE web_account SET ip = ?, address = ?,agent = ?, visited_count = ?"
-      await query(sqlString1, [ip, ipAddress, agent, count])
+      const sqlString1 = "UPDATE web_account SET ip = ?, address = ?,agent = ?, visited_count = ? WHERE identify=?"
+      await query(sqlString1, [ip, ipAddress, agent, count, identify])
     }
     //无访问记录，插入表中
     else {
