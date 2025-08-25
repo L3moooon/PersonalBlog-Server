@@ -2,7 +2,7 @@ const db = require('../../config/db');
 const { query, getConnection } = require('@config/db-util')
 
 // 网站上线时间戳（秒级）
-const ESTABLISHING_DATE = 1754707126;
+const ESTABLISHING_DATE = 1756111504;
 
 // 获取网站运转信息
 exports.info = async (req, res) => {
