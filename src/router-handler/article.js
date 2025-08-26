@@ -78,19 +78,20 @@ exports.changeTop = async (req, res) => {
     return res.send({ status: 0, message: error.message });
   }
 }
-//删除文章
+//删除文章，同时删除评论
 exports.delArticle = async (req, res) => {
-  const { id } = req.body
-  const sqlString = 'DELETE FROM article WHERE id=?'
-  db.query(sqlString, [id], (err, result) => {
-    if (err) {
-      return res.send({ status: 0, message: err.message })
-    }
-    if (result.length > 0) {
-      return res.send({ status: 1, message: '删除成功！' })
-    }
-  })
+  try {
+    const { id } = req.body
+    const sqlString1 = 'DELETE FROM comment WHERE article_id=?'
+    const sqlString2 = 'DELETE FROM article WHERE id=?'
+    await query(sqlString1, [id])
+    await query(sqlString2, [id])
+    return res.send({ status: 1, message: '删除成功！' })
+  } catch (error) {
+    return res.send({ status: 0, message: error.message });
+  }
 }
+
 //根据id获取文章
 exports.getArticle = async (req, res) => {
   const { id } = req.body

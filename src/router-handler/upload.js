@@ -21,8 +21,8 @@ exports.upload = async (req, res) => {
 
     // 上传文件到OSS
     const result = await client.put(ossFilePath, localFilePath);
-    console.log(result);
-
+    const pathUrl = result.url.replace("http://willi-bucket.oss-cn-beijing.aliyuncs.com", "")
+    console.log(pathUrl);
     // 删除本地临时文件
     fs.unlinkSync(localFilePath);
     // 返回上传结果，包含文件URL
@@ -31,7 +31,7 @@ exports.upload = async (req, res) => {
       message: '文件上传成功',
       data: {
         name: req.file.originalname,
-        url: result.url,
+        url: pathUrl,
       }
     });
   } catch (error) {
