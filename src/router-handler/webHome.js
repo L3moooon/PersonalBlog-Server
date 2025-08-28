@@ -106,7 +106,7 @@ exports.modifyTheme = async (req, res) => {
 //获取首页文章列表
 exports.getHomeArticle = async (req, res) => {
   try {
-    const sqlString = "SELECT a.*, GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,(SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id WHERE a.status = 1 GROUP BY a.id ORDER BY a.top DESC, a.last_edit_date DESC;"
+    const sqlString = "SELECT a.*, GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,(SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id WHERE a.status = 1 GROUP BY a.id ORDER BY a.top DESC, a.publish_date DESC;"
     const result = await query(sqlString)
     if (result.length > 0) {
       result.forEach(v => {
@@ -126,5 +126,32 @@ exports.getHomeArticle = async (req, res) => {
   }
 }
 //获取推荐文章
-exports.getRecommendArticle = async (req, res) => { }
-
+exports.getRecommendArticle = async (req, res) => {
+  try {
+    // 从请求参数获取页码和每页数量，默认第一页，每页5条
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 5;
+    const offset = (page - 1) * limit;
+    const sqlString1 = `SELECT id, title, cover_img, publish_date 
+       FROM article
+       WHERE status = '1' 
+       ORDER BY view DESC 
+       LIMIT ?, ?`
+    const sqlString2 = `SELECT COUNT(*) as total 
+       FROM article
+       WHERE status = '1'`
+    // 查询当前页文章
+    const articleRes = await query(sqlString1, [offset, limit])
+    const moreRes = await query(sqlString2)
+    const total = moreRes[0].total;
+    return res.json({
+      status: 1, message: '请求成功！', data: articleRes, hasMore: page * limit < total
+    })
+  } catch (error) {
+    console.error('获取推荐文章失败:', error);
+    res.status(500).json({
+      success: false,
+      message: '服务器错误，获取推荐文章失败'
+    });
+  }
+};
