@@ -2,10 +2,22 @@
 const { query } = require('@config/db-util/index');
 const IP2Region = require('ip2region').default;
 const IPquery = new IP2Region();
+
+// 验证字符串是否为空或仅包含空白字符
+const isEmptyString = (str) => {
+  return !str || typeof str !== 'string' || str.trim() === '';
+};
+
 //发送游客数据进行统计
 exports.visited = async (req, res) => {
   try {
     const { identify, agent } = req.body
+    if (isEmptyString(agent) || isEmptyString(identify)) {
+      return res.status(400).json({
+        status: 0,
+        message: '参数错误'
+      });
+    }
     //首先查询之前有无访问记录
     const sqlString = 'SELECT id, name, portrait,last_login_time,visited_count FROM web_account WHERE identify=?'
     //更新ip地址
@@ -24,7 +36,7 @@ exports.visited = async (req, res) => {
     }
     //无访问记录，插入表中
     else {
-      const sqlString2 = 'INSERT INTO web_account(identify,name,ip,address,agent) VALUES(?,?,?,?,?)'
+      const sqlString2 = 'INSERT INTO web_account(identify,name,ip,address,agent,last_login_time) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP)'
       const name = '游客 ' + identify
       const insertRes = await query(sqlString2, [identify, name, ip, ipAddress, agent])
       result = [{

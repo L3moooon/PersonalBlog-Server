@@ -1,34 +1,105 @@
 //后台文章管理
 const db = require('@config/db');
 const { query } = require('@config/db-util');
-//后台获取所有文章
+// 后台获取所有文章（支持分页、日期筛选和搜索）
 exports.getAllArticle = async (req, res) => {
   try {
-    const sqlString = "SELECT a.*, GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,(SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id GROUP BY a.id;"
-    const result = await query(sqlString)
+    // 从请求参数中获取分页、日期范围和搜索关键词
+    const {
+      pageNo = 1,          // 页码，默认第1页
+      pageSize = 10,       // 每页条数，默认10条
+      dateRange,           // 日期范围，格式: [startDate, endDate]
+      searchKey            // 搜索关键词
+    } = req.query;
+    const offset = (pageNo - 1) * pageSize;// 计算分页偏移量
+    // 基础SQL
+    let sql = `
+      SELECT a.*, 
+             GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,
+             (SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count 
+      FROM article a 
+      LEFT JOIN article_tag_relation at ON a.id = at.article_id  
+      LEFT JOIN tag t ON at.tag_id = t.id 
+    `;
+
+    // 条件部分
+    const whereConditions = [];
+    const queryParams = [];
+
+    // 处理日期范围筛选
+    if (dateRange && Array.isArray(dateRange) && dateRange.length === 2) {
+      const [startDate, endDate] = dateRange;
+      if (startDate) {
+        whereConditions.push('a.create_time >= ?');
+        queryParams.push(startDate);
+      }
+      if (endDate) {
+        whereConditions.push('a.create_time <= ?');
+        queryParams.push(endDate);
+      }
+    }
+    // 处理搜索关键词（搜索标题和内容）
+    if (searchKey) {
+      whereConditions.push('(a.title LIKE ? OR a.content LIKE ?)');
+      const likeValue = `%${searchKey}%`;
+      queryParams.push(likeValue, likeValue);
+    }
+    // 添加WHERE条件
+    if (whereConditions.length > 0) {
+      sql += ` WHERE ${whereConditions.join(' AND ')}`;
+    }
+    // 分组
+    sql += ' GROUP BY a.id';
+
+    // 获取总条数（用于分页）
+    const countSql = `SELECT COUNT(DISTINCT a.id) AS total FROM article a ${whereConditions.length > 0 ? `WHERE ${whereConditions.join(' AND ')}` : ''}`;
+    const countResult = await query(countSql, queryParams);
+    const total = countResult[0].total;
+
+    // 添加分页
+    sql += ' LIMIT ?, ?';
+    queryParams.push(offset, parseInt(pageSize));
+
+    // 执行查询
+    const result = await query(sql, queryParams);
+
+    // 处理标签格式
     if (result.length > 0) {
       result.forEach(v => {
         if (v.tag && v.tag.length > 0) {
-          const tagArray = v.tag.split(',')
-          // 转换为[{id,name}]格式
+          const tagArray = v.tag.split(', ');
           v.tag = tagArray.map(tag => {
             const [id, name] = tag.split(':');
             return { id: parseInt(id), name };
           });
+        } else {
+          v.tag = []; // 统一处理空标签为数组
         }
-      })
+      });
     }
-    return res.json({ status: 1, message: '请求成功！', data: result })
+    // 返回数据（包含分页信息）
+    return res.json({
+      status: 1,
+      message: '请求成功！',
+      data: result,
+      pagination_info: {
+        total,
+        pageNo: parseInt(pageNo),
+        pageSize: parseInt(pageSize)
+      }
+
+    });
   } catch (error) {
+    console.error('获取文章列表失败:', error);
     return res.send({ status: 0, message: error.message })
   }
-}
+};
 //新增或修改文章
 exports.article = async (req, res) => {
   try {
     const { id, title, cover_img, abstract, content, status, tag } = req.body
     if (id) {//修改文章
-      const sqlString1 = 'UPDATE article SET title = ?, cover_img = ?, abstract = ?,content = ?, status = ? WHERE id = ?'
+      const sqlString1 = 'UPDATE article SET title = ?, cover_img = ?, abstract = ?,content = ?, status = ?,last_edit_Date = CURRENT_TIMESTAMP WHERE id = ?'
       await query(sqlString1, [title, cover_img, abstract, content, status, id])
       if (tag && tag.length > 0) {
         const tagValues = tag.map(tagId => [id, tagId]);

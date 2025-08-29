@@ -1,10 +1,11 @@
 //后台登录
 const db = require('@config/db');
+const { query } = require('@config/db-util');
 const IP2Region = require('ip2region').default;
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
-const query = new IP2Region();
+const IPquery = new IP2Region();
 const secretKey = crypto.randomBytes(32).toString('hex');
 
 //后台管理员登录
@@ -17,27 +18,19 @@ exports.login = async (req, res) => {
   try {
     const sql = 'SELECT * FROM admin_account WHERE email = ? AND password = ?';
     console.log('执行的 SQL:', sql, [email, password]);
-    db.query(sql, [email, password], (err, rows) => {
-      if (err) {
-        return handleError(res, err);
-      }
-      if (rows.length === 0) {
-        return res.json({ status: 0, message: '用户名或密码错误' });
-      }
-      const token = jwt.sign({ email }, secretKey, { expiresIn: '168h' });
-      //登录成功时获取ip地址
-      const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-      const ipAddress = JSON.stringify(query.search(ip));
-      //将ip数据添加到数据库
-      const sqlString = 'UPDATE admin_account SET ip = ?, location = ?,last_login_time = ? WHERE email = ?';
-      const time = Date.now
-      db.query(sqlString, [ip, ipAddress, time, email], (err2) => {
-        if (err) {
-          return handleError(res, err2);
-        }
-        res.json({ status: 1, token, name: rows[0].name });
-      });
-    });
+    const result = await query(sql, [email, password]);
+    if (result.length === 0) {
+      return res.json({ status: 0, message: '用户名或密码错误' });
+    }
+    const token = jwt.sign({ email }, secretKey, { expiresIn: '168h' });
+    //登录成功时获取ip地址
+    const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    const ipAddress = JSON.stringify(IPquery.search(ip));
+    //将ip数据添加到数据库
+    const sqlString = 'UPDATE admin_account SET ip = ?, location = ? WHERE email = ?,last_login_time = CURRENT_TIMESTAMP';
+    await query(sqlString, [email, password]);
+    return res.json({ status: 1, token, name: rows[0].name });
+
   } catch (error) {
     handleError(res, error);
   }
@@ -71,7 +64,22 @@ exports.register = async (req, res) => {
 };
 //忘记密码
 
+//获取所有管理员
+exports.getAdminList = async (req, res) => {
+  try {
+    const sqlString = "SELECT id, email, create_time, last_login_time, ip, location,status FROM admin_account "
+    const result = await query(sqlString)
+    result.forEach(item => {
+      if (item.location) {
+        item.location = JSON.parse(item.location);
+      }
+    });
+    res.json({ status: 1, data: result });
+  } catch (error) {
+    res.send({ status: 0, message: error.message });
+  }
 
+}
 // 统一错误处理函数
 const handleError = (res, error) => {
   return res.send({ status: 0, message: error.message });
