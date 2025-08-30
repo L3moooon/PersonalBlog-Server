@@ -10,27 +10,24 @@ const secretKey = crypto.randomBytes(32).toString('hex');
 
 //后台管理员登录
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
-  // 输入验证
-  if (!email || !password) {
-    return res.json({ status: 0, message: '邮箱和密码是必需的' });
-  }
   try {
-    const sql = 'SELECT * FROM admin_account WHERE email = ? AND password = ?';
-    console.log('执行的 SQL:', sql, [email, password]);
-    const result = await query(sql, [email, password]);
+    const { account, password } = req.body;
+    if (!account || !password) { // 输入验证
+      return res.json({ status: 0, message: '邮箱和密码是必需的' });
+    }
+    const sqsqlStringl = 'SELECT * FROM admin_account WHERE account = ? AND password = ?';
+    const result = await query(sqsqlStringl, [account, password]);
     if (result.length === 0) {
       return res.json({ status: 0, message: '用户名或密码错误' });
     }
-    const token = jwt.sign({ email }, secretKey, { expiresIn: '168h' });
+    const token = jwt.sign({ account }, secretKey, { expiresIn: '168h' });
     //登录成功时获取ip地址
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
-    const ipAddress = JSON.stringify(IPquery.search(ip));
+    const address = JSON.stringify(IPquery.search(ip));
     //将ip数据添加到数据库
-    const sqlString = 'UPDATE admin_account SET ip = ?, location = ? WHERE email = ?,last_login_time = CURRENT_TIMESTAMP';
-    await query(sqlString, [email, password]);
-    return res.json({ status: 1, token, name: rows[0].name });
-
+    const sqlString2 = 'UPDATE admin_account SET ip = ?, location = ? ,last_login_time = CURRENT_TIMESTAMP WHERE account = ?';
+    await query(sqlString2, [ip, address, account, password]);
+    return res.json({ status: 1, token, name: result[0].name });
   } catch (error) {
     handleError(res, error);
   }
@@ -38,11 +35,11 @@ exports.login = async (req, res) => {
 
 //后台管理员注册
 exports.register = async (req, res) => {
-  const { email, password, name } = req.body;
+  const { account, password, name } = req.body;
   try {
     // 检查邮箱是否已存在
-    const checkSql = 'SELECT * FROM admin_account WHERE email = ?';
-    db.query(checkSql, [email], (err, existingRows) => {
+    const checkSql = 'SELECT * FROM admin_account WHERE account = ?';
+    db.query(checkSql, [account], (err, existingRows) => {
       if (err) {
         return handleError(res, err);
       }
@@ -50,8 +47,8 @@ exports.register = async (req, res) => {
         return res.json({ status: 0, message: '该邮箱已被注册' });
       }
       // 插入新用户
-      const insertSql = 'INSERT INTO admin_account (email, password, name) VALUES (?, ?, ?)';
-      db.query(insertSql, [email, password, name], (err, result) => {
+      const insertSql = 'INSERT INTO admin_account (account, password, name) VALUES (?, ?, ?)';
+      db.query(insertSql, [account, password, name], (err, result) => {
         if (err) {
           return handleError(res, err);
         }
@@ -67,7 +64,7 @@ exports.register = async (req, res) => {
 //获取所有管理员
 exports.getAdminList = async (req, res) => {
   try {
-    const sqlString = "SELECT id, email, create_time, last_login_time, ip, location,status FROM admin_account "
+    const sqlString = "SELECT id, account, create_time, last_login_time, ip, location,status FROM admin_account "
     const result = await query(sqlString)
     result.forEach(item => {
       if (item.location) {
