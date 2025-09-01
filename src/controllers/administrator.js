@@ -13,13 +13,46 @@ exports.login = async (req, res) => {
     if (!account || !password) { // 输入验证
       return res.json({ status: 0, message: '邮箱和密码是必需的' });
     }
-    const sqsqlStringl = 'SELECT * FROM admin_account WHERE account = ? AND password = ?';
+    const sqsqlStringl = `
+      SELECT 
+        a.id as user_id, 
+        a.name,
+        p.permission_type,
+        p.path,
+        p.component,
+        p.permission_code
+      FROM admin_account a
+      LEFT JOIN account_role_relation ar ON a.id = ar.user_id
+      LEFT JOIN admin_role r ON ar.role_id = r.id
+      LEFT JOIN role_permission_relation rp ON r.id = rp.role_id
+      LEFT JOIN admin_permission p ON rp.permission_id = p.id
+      WHERE a.account = ? AND a.password = ?
+    `;
     const result = await query(sqsqlStringl, [account, password]);
     if (result.length === 0) {
       return res.json({ status: 0, message: '用户名或密码错误' });
     }
-    //TODO使用redis维护一张登录表，防止同一账号多地登录
-    const token = jwt.sign({ account }, secretKey, { expiresIn: '168h' });
+    console.log(result);
+    const { user_id, name } = result[0];
+    const routeKeys = [];
+    const componentKeys = [];
+    const buttonKeys = [];
+    result.map(item => {
+      switch (item.permission_type) {
+        case 1:
+          routeKeys.push(item.path)
+          break;
+        case 2:
+          componentKeys.push(item.component)
+          break;
+        case 3:
+          buttonKeys.push(item.permission_code)
+          break;
+        default:
+          break;
+      }
+    });
+    const token = jwt.sign({ user_id }, secretKey, { expiresIn: '168h' });
     //登录成功时获取ip地址
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
     const address = JSON.stringify(IPquery.search(ip));
@@ -30,10 +63,11 @@ exports.login = async (req, res) => {
       status: 1,
       token,
       user: {
-        name: result[0].name,
+        name,
         permissions: {
-          routeKeys: [],
-          buttonKeys: []
+          routeKeys,
+          componentKeys,
+          buttonKeys
         },
       }
     });

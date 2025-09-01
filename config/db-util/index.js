@@ -7,17 +7,13 @@ const pool = mysql.createPool({
   database: process.env.DB_NAME,
 })
 
-
 // 封装query函数，返回Promise
 exports.query = (sql, params) => {
   return new Promise((resolve, reject) => {
-    // 使用连接池执行查询
     pool.query(sql, params, (err, result) => {
       if (err) {
-        // 出错时拒绝Promise
         reject(err);
       } else {
-        // 成功时 resolve 结果
         resolve(result);
       }
     });

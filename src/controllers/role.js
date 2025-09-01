@@ -18,7 +18,7 @@ exports.addRole = async (req, res) => {
 // 获取角色列表
 exports.getRoleList = async (req, res) => {
   try {
-    const sqlString = 'SELECT * FROM admin_role ';
+    const sqlString = 'SELECT * FROM admin_role';
     const result = await query(sqlString)
     return res.json({
       status: 1,
@@ -32,7 +32,7 @@ exports.getRoleList = async (req, res) => {
 //获取权限列表
 exports.getPermissionList = async (req, res) => {
   try {
-    const sqlString = 'SELECT * FROM admin_permission ';
+    const sqlString = 'SELECT * FROM admin_permission';
     const result = await query(sqlString)
     return res.json({
       status: 1,
@@ -46,9 +46,8 @@ exports.getPermissionList = async (req, res) => {
 // 获取单个角色权限详情
 exports.getRoleDetail = async (req, res) => {
   const { id } = req.params
-
   const sqlString = `
-    SELECT id, role_name, role_code, description, create_time, update_time, is_disabled 
+    SELECT id, role_name, role_code, description, create_time, update_time, disabled 
     FROM sys_role 
     WHERE id = ?
   `
