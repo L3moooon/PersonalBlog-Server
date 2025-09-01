@@ -1,4 +1,6 @@
-require('module-alias/register')//引入别名
+require('module-alias/register')//引入路径别名
+require('dotenv').config();//引入环境变量
+
 const express = require('express')
 const cors = require('cors')
 const bodyParser = require('body-parser')
@@ -19,6 +21,6 @@ routeFiles.forEach((file) => {
   app.use(`/${basePath}`, route)//注册路由
 });
 
-app.listen(3000, () => {
-  console.log('Server is running on http://127.0.0.1:3000')
+app.listen(process.env.PORT, () => {
+  console.log(`Server is running on http://127.0.0.1:${process.env.PORT}`)
 })

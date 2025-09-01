@@ -3,10 +3,8 @@ const db = require('@config/db');
 const { query } = require('@config/db-util');
 const IP2Region = require('ip2region').default;
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
-
+const { secretKey } = require('@config/jwt'); // 引入固定密钥
 const IPquery = new IP2Region();
-const secretKey = crypto.randomBytes(32).toString('hex');
 
 //后台管理员登录
 exports.login = async (req, res) => {
@@ -20,6 +18,7 @@ exports.login = async (req, res) => {
     if (result.length === 0) {
       return res.json({ status: 0, message: '用户名或密码错误' });
     }
+    //TODO使用redis维护一张登录表，防止同一账号多地登录
     const token = jwt.sign({ account }, secretKey, { expiresIn: '168h' });
     //登录成功时获取ip地址
     const ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -27,9 +26,17 @@ exports.login = async (req, res) => {
     //将ip数据添加到数据库
     const sqlString2 = 'UPDATE admin_account SET ip = ?, location = ? ,last_login_time = CURRENT_TIMESTAMP WHERE account = ?';
     await query(sqlString2, [ip, address, account, password]);
-
-
-    return res.json({ status: 1, token, name: result[0].name });
+    return res.json({
+      status: 1,
+      token,
+      user: {
+        name: result[0].name,
+        permissions: {
+          routeKeys: [],
+          buttonKeys: []
+        },
+      }
+    });
   } catch (error) {
     handleError(res, error);
   }

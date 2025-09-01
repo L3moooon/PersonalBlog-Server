@@ -1,6 +1,6 @@
 const db = require('@config/db')
 const { query } = require('@config/db-util');
-// 新增角色
+// 新增或更新角色
 exports.addRole = async (req, res) => {
   try {
     const { role_name, description } = req.body
@@ -15,7 +15,6 @@ exports.addRole = async (req, res) => {
     return res.send({ code: 0, message: err.message })
   }
 }
-
 // 获取角色列表
 exports.getRoleList = async (req, res) => {
   try {
@@ -30,7 +29,21 @@ exports.getRoleList = async (req, res) => {
     return res.send({ code: 0, message: err.message })
   }
 }
-// 获取单个角色详情
+//获取权限列表
+exports.getPermissionList = async (req, res) => {
+  try {
+    const sqlString = 'SELECT * FROM admin_permission ';
+    const result = await query(sqlString)
+    return res.json({
+      status: 1,
+      message: '权限列表获取成功',
+      data: result
+    })
+  } catch (error) {
+    return res.send({ code: 0, message: err.message })
+  }
+}
+// 获取单个角色权限详情
 exports.getRoleDetail = async (req, res) => {
   const { id } = req.params
 
@@ -55,81 +68,6 @@ exports.getRoleDetail = async (req, res) => {
     })
   })
 }
-
-// 更新角色信息
-exports.updateRole = async (req, res) => {
-  const { id } = req.params
-  const { role_name, role_code, description, is_disabled } = req.body
-
-  // 验证必填字段
-  if (!role_name || !role_code) {
-    return res.send({ code: 0, message: '角色名称和角色编码为必填项' })
-  }
-
-  const sqlString = `
-    UPDATE sys_role 
-    SET role_name = ?, role_code = ?, description = ?, 
-        is_disabled = ?, update_time = NOW() 
-    WHERE id = ?
-  `
-  db.query(
-    sqlString,
-    [role_name, role_code, description || null, is_disabled || 0, id],
-    (err, result) => {
-      if (err) {
-        return res.send({ code: 0, message: err.message })
-      }
-
-      if (result.affectedRows === 0) {
-        return res.send({ code: 0, message: '角色不存在或未修改' })
-      }
-
-      return res.send({ status: 1, message: '角色更新成功' })
-    }
-  )
-}
-
-// 删除角色
-exports.deleteRole = async (req, res) => {
-  const { id } = req.params
-
-  // 先检查是否有关联的权限或用户（可选，根据业务需求添加）
-  const checkSql = `
-    SELECT COUNT(*) as关联数 FROM sys_role_permission WHERE role_id = ?
-    UNION ALL
-    SELECT COUNT(*) as关联数 FROM sys_user_role WHERE role_id = ?
-  `
-  db.query(checkSql, [id, id], (checkErr, checkResult) => {
-    if (checkErr) {
-      return res.send({ code: 0, message: checkErr.message })
-    }
-
-    // 如果有关联数据，阻止删除（可选逻辑）
-    const permissionCount = checkResult[0].关联数
-    const userCount = checkResult[1].关联数
-    if (permissionCount > 0 || userCount > 0) {
-      return res.send({
-        code: 0,
-        message: `该角色已关联${permissionCount}个权限和${userCount}个用户，无法删除`
-      })
-    }
-
-    // 执行删除
-    const deleteSql = 'DELETE FROM sys_role WHERE id = ?'
-    db.query(deleteSql, [id], (err, result) => {
-      if (err) {
-        return res.send({ code: 0, message: err.message })
-      }
-
-      if (result.affectedRows === 0) {
-        return res.send({ code: 0, message: '角色不存在' })
-      }
-
-      return res.send({ status: 1, message: '角色删除成功' })
-    })
-  })
-}
-
 // 角色分配权限
 exports.assignPermission = async (req, res) => {
   const { id } = req.params
@@ -198,3 +136,46 @@ exports.assignPermission = async (req, res) => {
     })
   })
 }
+
+// 删除角色
+exports.deleteRole = async (req, res) => {
+  const { id } = req.params
+
+  // 先检查是否有关联的权限或用户（可选，根据业务需求添加）
+  const checkSql = `
+    SELECT COUNT(*) as关联数 FROM sys_role_permission WHERE role_id = ?
+    UNION ALL
+    SELECT COUNT(*) as关联数 FROM sys_user_role WHERE role_id = ?
+  `
+  db.query(checkSql, [id, id], (checkErr, checkResult) => {
+    if (checkErr) {
+      return res.send({ code: 0, message: checkErr.message })
+    }
+
+    // 如果有关联数据，阻止删除（可选逻辑）
+    const permissionCount = checkResult[0].关联数
+    const userCount = checkResult[1].关联数
+    if (permissionCount > 0 || userCount > 0) {
+      return res.send({
+        code: 0,
+        message: `该角色已关联${permissionCount}个权限和${userCount}个用户，无法删除`
+      })
+    }
+
+    // 执行删除
+    const deleteSql = 'DELETE FROM sys_role WHERE id = ?'
+    db.query(deleteSql, [id], (err, result) => {
+      if (err) {
+        return res.send({ code: 0, message: err.message })
+      }
+
+      if (result.affectedRows === 0) {
+        return res.send({ code: 0, message: '角色不存在' })
+      }
+
+      return res.send({ status: 1, message: '角色删除成功' })
+    })
+  })
+}
+
+
