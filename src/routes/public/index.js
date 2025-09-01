@@ -3,8 +3,8 @@ const fs = require('fs');
 const multer = require('multer');
 const path = require('path');
 
-const articleHandler = require('@handler/article')
-const uploadHandler = require('@handler/upload');
+const articleHandler = require('@controllers/article')
+const uploadHandler = require('@controllers/upload');
 
 const router = express.Router();
 
@@ -37,7 +37,7 @@ const upload = multer({
   storage: storage,
   fileFilter: fileFilter,
   limits: {
-    fileSize: 500 * 1024 * 1024 // 限制500MB
+    fileSize: 5 * 1024 * 1024 // 限制5MB
   }
 });
 

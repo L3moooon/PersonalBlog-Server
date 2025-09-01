@@ -4,9 +4,8 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "nodemon src/index.js",
-    "test": "jest",
-    "dev": "nodemon src/index.js"
+    "dev": "nodemon src/index.js",
+    "test": "jest"
   },
   "author": "宵时雨",
   "license": "ISC",
@@ -25,7 +24,8 @@
     "sequelize": "^6.37.7"
   },
   "_moduleAliases": {
-    "@handler": "./src/router-handler/",
-    "@config": "./config"
+    "@controllers": "./src/controllers/",
+    "@config": "./config",
+    "@middleware": "./src/middleware"
   }
 }

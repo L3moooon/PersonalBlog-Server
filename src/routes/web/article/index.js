@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
-const articleHandler = require('@handler/article')
-const commentHandler = require('@handler/comment')
+const articleHandler = require('@controllers/article')
+const commentHandler = require('@controllers/comment')
 
 router.post('/getArticle', articleHandler.getArticle);//获取文章
 router.post('/getComment', commentHandler.getAllComments);//获取文章评论

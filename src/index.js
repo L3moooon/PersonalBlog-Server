@@ -16,7 +16,7 @@ const routeFiles = glob.sync(ROOT_PATH);
 routeFiles.forEach((file) => {
   const route = require(file);
   const basePath = path.relative(path.join(__dirname, 'routes'), path.dirname(file)).replace(/\\/g, '/');
-  app.use(`/${basePath}`, route)
+  app.use(`/${basePath}`, route)//注册路由
 });
 
 app.listen(3000, () => {

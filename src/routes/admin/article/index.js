@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const articleHandler = require('@handler/article')
-
+const articleHandler = require('@controllers/article')
+const { verifyToken } = require('@middleware/auth'); // 引入中间件
+router.use(verifyToken)
 router.post('/editOrAdd', articleHandler.article);//新增或编辑文章
 router.post('/changeStatus', articleHandler.changeStatus);//更改文章显隐状态
 router.post('/changeTop', articleHandler.changeTop);//更改文章置顶状态

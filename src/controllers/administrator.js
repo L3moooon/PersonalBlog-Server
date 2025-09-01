@@ -27,6 +27,8 @@ exports.login = async (req, res) => {
     //将ip数据添加到数据库
     const sqlString2 = 'UPDATE admin_account SET ip = ?, location = ? ,last_login_time = CURRENT_TIMESTAMP WHERE account = ?';
     await query(sqlString2, [ip, address, account, password]);
+
+
     return res.json({ status: 1, token, name: result[0].name });
   } catch (error) {
     handleError(res, error);
