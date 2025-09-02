@@ -1,5 +1,4 @@
 //后台登录
-const db = require('@config/db');
 const { query } = require('@config/db-util');
 const IP2Region = require('ip2region').default;
 const jwt = require('jsonwebtoken');
@@ -32,7 +31,6 @@ exports.login = async (req, res) => {
     if (result.length === 0) {
       return res.json({ status: 0, message: '用户名或密码错误' });
     }
-    console.log(result);
     const { user_id, name } = result[0];
     const routeKeys = [];
     const componentKeys = [];
@@ -76,28 +74,24 @@ exports.login = async (req, res) => {
   }
 };
 
-//后台管理员注册
+//后台管理员注册-默认角色为游客
 exports.register = async (req, res) => {
   const { account, password, name } = req.body;
   try {
     // 检查邮箱是否已存在
     const checkSql = 'SELECT * FROM admin_account WHERE account = ?';
-    db.query(checkSql, [account], (err, existingRows) => {
-      if (err) {
-        return handleError(res, err);
-      }
-      if (existingRows.length > 0) {
-        return res.json({ status: 0, message: '该邮箱已被注册' });
-      }
-      // 插入新用户
-      const insertSql = 'INSERT INTO admin_account (account, password, name) VALUES (?, ?, ?)';
-      db.query(insertSql, [account, password, name], (err, result) => {
-        if (err) {
-          return handleError(res, err);
-        }
-        res.json({ status: 1, message: '注册成功' });
-      });
-    });
+    const checkResult = await query(checkSql, [account]);
+    if (checkResult.length > 0) {
+      return res.json({ status: 0, message: '该邮箱已被注册' });
+    }
+    // 插入新用户
+    const insertSql = 'INSERT INTO admin_account (account, password, name) VALUES (?, ?, ?)';
+    const insertResult = await query(insertSql, [account, password, name])
+    // 为新用户分配默认角色
+    const defaultRoleId = 4; // 默认角色ID-游客
+    const assignRoleSql = 'INSERT INTO account_role_relation (user_id, role_id) VALUES (?, ?)';
+    await query(assignRoleSql, [insertResult.insertId, defaultRoleId]);
+    res.json({ status: 1, message: '注册成功' });
   } catch (error) {
     handleError(res, error);
   }
@@ -116,10 +110,11 @@ exports.getAdminList = async (req, res) => {
     });
     res.json({ status: 1, data: result });
   } catch (error) {
-    res.send({ status: 0, message: error.message });
+    handleError(res, error);
   }
 
 }
+
 // 统一错误处理函数
 const handleError = (res, error) => {
   return res.send({ status: 0, message: error.message });
