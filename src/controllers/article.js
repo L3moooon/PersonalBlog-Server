@@ -62,16 +62,17 @@ exports.getAllArticle = async (req, res) => {
 
     // 执行查询
     const result = await query(sql, queryParams);
-
+    console.log(result);
     // 处理标签格式
     if (result.length > 0) {
       result.forEach(v => {
         if (v.tag && v.tag.length > 0) {
           const tagArray = v.tag.split(', ');
-          v.tag = tagArray.map(tag => {
-            const [id, name] = tag.split(':');
-            return { id: parseInt(id), name };
-          });
+          // v.tag = tagArray.map(tag => {
+          //   const [id, name] = tag.split(':');
+          //   return { id: parseInt(id), name };
+          // });
+          v.tag = tagArray.map(tag => parseInt(tag.split(':')[0]));
         } else {
           v.tag = []; // 统一处理空标签为数组
         }
