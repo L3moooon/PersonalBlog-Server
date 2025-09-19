@@ -83,7 +83,7 @@ exports.getAllArticle = async (req, res) => {
       status: 1,
       message: '请求成功！',
       data: result,
-      pagination_info: {
+      pagination: {
         total,
         pageNo: parseInt(pageNo),
         pageSize: parseInt(pageSize)
@@ -96,7 +96,7 @@ exports.getAllArticle = async (req, res) => {
   }
 };
 //新增或修改文章
-exports.article = async (req, res) => {
+exports.updateArticle = async (req, res) => {
   try {
     const { id, title, cover_img, abstract, content, status, tag } = req.body
     if (id) {//修改文章

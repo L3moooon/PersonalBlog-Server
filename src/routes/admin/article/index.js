@@ -4,7 +4,7 @@ const articleHandler = require('@controllers/article')
 const { verifyToken } = require('@middleware/auth'); // 引入中间件
 
 router.use(verifyToken)
-router.post('/editOrAdd', articleHandler.article);//新增或编辑文章
+router.post('/update', articleHandler.updateArticle);//新增或编辑文章
 router.post('/changeStatus', articleHandler.changeStatus);//更改文章显隐状态
 router.post('/changeTop', articleHandler.changeTop);//更改文章置顶状态
 router.post('/del', articleHandler.delArticle);//删除文章
