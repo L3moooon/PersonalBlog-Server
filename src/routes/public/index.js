@@ -41,7 +41,7 @@ const upload = multer({
   }
 });
 
-router.post('/getAllArticle', articleHandler.getAllArticle);//通用获取所有文章列表
+// router.post('/getAllArticle', articleHandler.getAllArticle);//通用获取所有文章列表
 router.post('/upload', upload.single('file'), uploadHandler.upload);//通用上传
 
 module.exports = router;

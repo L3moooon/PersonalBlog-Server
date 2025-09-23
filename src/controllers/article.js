@@ -2,7 +2,7 @@
 const db = require('@config/db');
 const { query } = require('@config/db-util');
 // 后台获取所有文章（支持分页、日期筛选和搜索）
-exports.getAllArticle = async (req, res) => {
+exports.getArticleList = async (req, res) => {
   try {
     // 从请求参数中获取分页、日期范围和搜索关键词
     const {
@@ -96,7 +96,7 @@ exports.getAllArticle = async (req, res) => {
   }
 };
 //新增或修改文章
-exports.updateArticle = async (req, res) => {
+exports.update = async (req, res) => {
   try {
     const { id, title, cover_img, abstract, content, status, tag } = req.body
     if (id) {//修改文章
