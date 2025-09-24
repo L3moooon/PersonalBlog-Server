@@ -80,80 +80,97 @@ exports.getArticleList = async (req, res) => {
     }
     // 返回数据（包含分页信息）
     return res.json({
-      status: 1,
-      message: '请求成功！',
+      code: 1,
+      msg: '请求成功！',
       data: result,
       pagination: {
         total,
         pageNo: parseInt(pageNo),
         pageSize: parseInt(pageSize)
       }
-
     });
   } catch (error) {
     console.error('获取文章列表失败:', error);
     return res.send({ status: 0, message: error.message })
   }
 };
-//新增或修改文章
-exports.update = async (req, res) => {
+//新增文章
+exports.addArticle = async (req, res) => {
   try {
-    const { id, title, cover_img, abstract, content, status, tag } = req.body
-    if (id) {//修改文章
-      const sqlString1 = 'UPDATE article SET title = ?, cover_img = ?, abstract = ?,content = ?, status = ?,last_edit_Date = CURRENT_TIMESTAMP WHERE id = ?'
-      await query(sqlString1, [title, cover_img, abstract, content, status, id])
-      if (tag && tag.length > 0) {
-        const tagValues = tag.map(tagId => [id, tagId]);
-        // 先删除文章的所有tag再批量插入
-        const sqlString2 = "DELETE FROM article_tag_relation WHERE article_id=?"
-        const sqlString3 = 'INSERT INTO article_tag_relation(article_id, tag_id) VALUES ?';
-        await query(sqlString2, [id])
-        console.log([tagValues]);
-        await query(sqlString3, [tagValues]);//批量插入
-      }
-      return res.send({ status: 1, message: '修改成功！' });
-    } else {//新增文章
-      const sqlString1 = 'INSERT INTO article(title,cover_img,abstract,content,status) VALUES(?,?,?,?,?)'
-      const addArticleResult = await query(sqlString1, [title, cover_img, abstract, content, status])
-      const articleId = addArticleResult.insertId;
-      if (tag && tag.length > 0) {
-        const tagValues = tag.map(tagId => [articleId, tagId]);
-        const sqlString2 = 'INSERT INTO article_tag_relation(article_id, tag_id) VALUES ?';
-        await query(sqlString2, [tagValues]);//批量插入
-      }
-      return res.send({ status: 1, message: '添加成功！' });
+    const { title, cover_img, abstract, content, status, tag } = req.body
+    const sqlString1 = 'INSERT INTO article(title,cover_img,abstract,content,status) VALUES(?,?,?,?,?)'
+    const addArticleResult = await query(sqlString1, [title, cover_img, abstract, content, status])
+    const articleId = addArticleResult.insertId;
+    if (tag && tag.length > 0) {
+      const tagValues = tag.map(tagId => [articleId, tagId]);
+      const sqlString2 = 'INSERT INTO article_tag_relation(article_id, tag_id) VALUES ?';
+      await query(sqlString2, [tagValues]);//批量插入
     }
+    return res.send({ code: 1, msg: '添加成功！' });
   } catch (error) {
-    return res.send({ status: 0, message: error.message });
+    return res.send({ code: 0, msg: error.message });
   }
 }
 
+//修改文章
+// 修改文章（精简版-支持部分更新）
+exports.updateArticle = async (req, res) => {
+  try {
+    const { id, tag, ...otherFields } = req.body;
+    if (!id) {
+      return res.send({ code: 0, msg: '文章ID不能为空' });
+    }
+    const allowFields = ['title', 'cover_img', 'abstract', 'content', 'status', 'top'];
+    const [updateFields, updateValues] = Object.entries(otherFields)
+      .filter(([key]) => allowFields.includes(key))
+      .reduce(([fields, values], [key, value]) => {
+        fields.push(`${key} = ?`);
+        values.push(value);
+        return [fields, values];
+      }, [[], []]);
+    updateValues.push(id); // WHERE条件的id
+    // 执行文章更新
+    const sqlString1 = `UPDATE article SET ${updateFields.join(', ')} WHERE id = ?`;
+    await query(sqlString1, updateValues);
+    // 处理标签更新
+    if (tag !== undefined) {
+      await query("DELETE FROM article_tag_relation WHERE article_id=?", [id]);
+      if (tag.length > 0) {
+        const tagValues = tag.map(tagId => [id, tagId]);
+        await query('INSERT INTO article_tag_relation(article_id, tag_id) VALUES ?', [tagValues]);
+      }
+    }
+    return res.send({ code: 1, msg: '修改成功！' });
+  } catch (error) {
+    return res.send({ code: 0, msg: error.message });
+  }
+};
 //更改文章显隐状态
-exports.changeStatus = async (req, res) => {
-  try {
-    const { id, status } = req.body
-    const sqlString1 = 'UPDATE article SET status=? WHERE id=?'
-    await query(sqlString1, [status, id])
-    return res.send({ status: 1, message: '修改成功！' });
-  } catch (error) {
-    return res.send({ status: 0, message: error.message });
-  }
-}
+// exports.changeStatus = async (req, res) => {
+//   try {
+//     const { id, status } = req.body
+//     const sqlString1 = 'UPDATE article SET status=? WHERE id=?'
+//     await query(sqlString1, [status, id])
+//     return res.send({ status: 1, message: '修改成功！' });
+//   } catch (error) {
+//     return res.send({ status: 0, message: error.message });
+//   }
+// }
 //更改文章置顶状态
-exports.changeTop = async (req, res) => {
-  try {
-    const { id, top } = req.body
-    const sqlString1 = 'UPDATE article SET top=? WHERE id=?'
-    await query(sqlString1, [top, id])
-    return res.send({ status: 1, message: '修改成功！' });
-  } catch (error) {
-    return res.send({ status: 0, message: error.message });
-  }
-}
+// exports.changeTop = async (req, res) => {
+//   try {
+//     const { id, top } = req.body
+//     const sqlString1 = 'UPDATE article SET top=? WHERE id=?'
+//     await query(sqlString1, [top, id])
+//     return res.send({ status: 1, message: '修改成功！' });
+//   } catch (error) {
+//     return res.send({ status: 0, message: error.message });
+//   }
+// }
 //删除文章，同时删除评论
-exports.delArticle = async (req, res) => {
+exports.deleteArticle = async (req, res) => {
   try {
-    const { id } = req.body
+    const { id } = req.params
     const sqlString1 = 'DELETE FROM comment WHERE article_id=?'
     const sqlString2 = 'DELETE FROM article WHERE id=?'
     await query(sqlString1, [id])

@@ -29,7 +29,7 @@ exports.login = async (req, res) => {
     `;
     const result = await query(sqsqlStringl, [account, password]);
     if (result.length === 0) {
-      return res.json({ status: 0, message: '用户名或密码错误' });
+      return res.json({ code: 0, msg: '用户名或密码错误' });
     }
     const { user_id, name } = result[0];
     const routeKeys = [];
@@ -58,7 +58,7 @@ exports.login = async (req, res) => {
     const sqlString2 = 'UPDATE admin_account SET ip = ?, location = ? ,last_login_time = CURRENT_TIMESTAMP WHERE account = ?';
     await query(sqlString2, [ip, address, account, password]);
     return res.json({
-      status: 1,
+      code: 1,
       token,
       user: {
         name,
@@ -91,7 +91,7 @@ exports.register = async (req, res) => {
     const defaultRoleId = 4; // 默认角色ID-游客
     const assignRoleSql = 'INSERT INTO account_role_relation (user_id, role_id) VALUES (?, ?)';
     await query(assignRoleSql, [insertResult.insertId, defaultRoleId]);
-    res.json({ status: 1, message: '注册成功' });
+    res.json({ code: 1, msg: '注册成功' });
   } catch (error) {
     handleError(res, error);
   }
@@ -112,10 +112,9 @@ exports.getAdminList = async (req, res) => {
   } catch (error) {
     handleError(res, error);
   }
-
 }
 
 // 统一错误处理函数
 const handleError = (res, error) => {
-  return res.send({ status: 0, message: error.message });
+  return res.send({ code: 0, msg: error.message });
 };
