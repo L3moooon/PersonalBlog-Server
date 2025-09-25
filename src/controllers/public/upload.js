@@ -1,10 +1,6 @@
-const OSS = require('ali-oss')
 const fs = require('fs');
 const path = require('path');
-const ossConfig = require('@config/oss')
-
-// 初始化OSS客户端
-const client = new OSS(ossConfig)
+const ossClient = require('@config/oss')
 
 // 上传文件到OSS
 exports.upload = async (req, res) => {
@@ -20,7 +16,7 @@ exports.upload = async (req, res) => {
     const ossFilePath = `${fileType}/${Date.now()}${fileExt}`;
 
     // 上传文件到OSS
-    const result = await client.put(ossFilePath, localFilePath);
+    const result = await ossClient.put(ossFilePath, localFilePath);
     const pathUrl = result.url.replace("http://willi-bucket.oss-cn-beijing.aliyuncs.com", "")
     console.log(pathUrl);
     // 删除本地临时文件

@@ -111,9 +111,7 @@ exports.addArticle = async (req, res) => {
     return res.send({ code: 0, msg: error.message });
   }
 }
-
 //修改文章
-// 修改文章（精简版-支持部分更新）
 exports.updateArticle = async (req, res) => {
   try {
     const { id, tag, ...otherFields } = req.body;
@@ -145,28 +143,6 @@ exports.updateArticle = async (req, res) => {
     return res.send({ code: 0, msg: error.message });
   }
 };
-//更改文章显隐状态
-// exports.changeStatus = async (req, res) => {
-//   try {
-//     const { id, status } = req.body
-//     const sqlString1 = 'UPDATE article SET status=? WHERE id=?'
-//     await query(sqlString1, [status, id])
-//     return res.send({ status: 1, message: '修改成功！' });
-//   } catch (error) {
-//     return res.send({ status: 0, message: error.message });
-//   }
-// }
-//更改文章置顶状态
-// exports.changeTop = async (req, res) => {
-//   try {
-//     const { id, top } = req.body
-//     const sqlString1 = 'UPDATE article SET top=? WHERE id=?'
-//     await query(sqlString1, [top, id])
-//     return res.send({ status: 1, message: '修改成功！' });
-//   } catch (error) {
-//     return res.send({ status: 0, message: error.message });
-//   }
-// }
 //删除文章，同时删除评论
 exports.deleteArticle = async (req, res) => {
   try {
@@ -181,33 +157,39 @@ exports.deleteArticle = async (req, res) => {
   }
 }
 
-//根据id获取文章
-exports.getArticle = async (req, res) => {
-  const { id } = req.body
-  const sqlString = 'SELECT * FROM article WHERE id=?'
-  db.query(sqlString, [id], (err, result) => {
+
+
+
+//新增标签
+exports.addTag = async (req, res) => {
+  const { name } = req.body
+  const sqlString = "INSERT INTO tag(tag_name) VALUES (?) "
+  db.query(sqlString, [name], (err, row) => {
     if (err) {
-      return res.send({ status: 0, message: err.message })
+      return res.send({ code: 0, message: err })
     }
-    if (result.length > 0) {
-      return res.json({ status: 1, message: '请求成功！', data: result[0] })
-    }
+    return res.send({ status: 1, message: '添加成功' })
   })
-
 }
-//更新文章访问量
-exports.view = async (req, res) => {
-  try {
-    const { id } = req.body
-    const sqlString = 'UPDATE article SET view=view+1 WHERE id=?'
-    await query(sqlString, [id])
-    return res.json({ status: 1, message: '请求成功！' })
-  } catch (error) {
-    return res.send({ status: 0, message: error.message })
-  }
-
+//删除标签
+exports.delTag = async (req, res) => {
+  const { id } = req.body
+  const sqlString = "DELETE FROM tag WHERE id=?"
+  db.query(sqlString, [id], (err, row) => {
+    if (err) {
+      return res.send({ code: 0, message: err })
+    }
+    return res.json({ status: 1, message: '删除成功' })
+  })
 }
-//更新文章点赞量
-// exports.view = async (req, res) => {
-//   //同一用户只能点赞一次
-// }
+
+//获取标签列表
+exports.getTagList = async (req, res) => {
+  const sqlString = "SELECT * FROM tag"
+  db.query(sqlString, (err, row) => {
+    if (err) {
+      return res.send({ code: 0, message: err })
+    }
+    return res.json({ status: 1, data: row })
+  })
+}

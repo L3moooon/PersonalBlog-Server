@@ -1,4 +1,3 @@
-//游客
 const { query } = require('@config/db-util/index');
 const IP2Region = require('ip2region').default;
 const IPquery = new IP2Region();
@@ -52,7 +51,7 @@ exports.visited = async (req, res) => {
 }
 
 //更改游客数据
-exports.modifyVisitor = async (req, res) => {
+exports.modifyInfo = async (req, res) => {
   try {
     const { name, portrait } = req.body
     res.send({ status: 1, message: '发送成功' })
@@ -60,18 +59,3 @@ exports.modifyVisitor = async (req, res) => {
   }
 }
 
-//获取游客数据
-exports.getVisitorList = async (req, res) => {
-  try {
-    const sqlString = 'SELECT * FROM web_account'
-    const result = await query(sqlString)
-    result.forEach(item => {
-      if (item.address) {
-        item.address = JSON.parse(item.address);
-      }
-    });
-    return res.json({ status: 1, message: '获取成功', data: result })
-  } catch (error) {
-    return res.send({ status: 0, message: error.message })
-  }
-}

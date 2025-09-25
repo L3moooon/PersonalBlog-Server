@@ -1,10 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const handler = require('@controllers/admin/comment');
+const handler = require('@controllers/admin/userManagement');
 const { verifyToken } = require('@middleware/auth'); // 引入中间件
 
 router.use(verifyToken)
-router.post('/getComments', handler.getCommentPanel);//获取评论
-router.post('/delComment', handler.delComment);//删除评论
+router.post('/getAdminList', handler.getAdminList);//获取所有管理员列表
 
 module.exports = router;

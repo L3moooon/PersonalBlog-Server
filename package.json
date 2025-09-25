@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon src/index.js",
-    "test": "jest"
+    "test": "jest",
+    "db:backup": "node scripts/db/backup/index.js",
+    "db:backup:now": "node scripts/db/backup/index.js --immediate"
   },
   "author": "宵时雨",
   "license": "ISC",

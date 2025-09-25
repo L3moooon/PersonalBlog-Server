@@ -1,5 +1,5 @@
 //前台
-const db = require('../../config/db');
+const db = require('../../../config/db');
 const { query, getConnection } = require('@config/db-util')
 
 // 网站上线时间戳（秒级）

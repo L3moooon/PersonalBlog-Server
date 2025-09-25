@@ -6,14 +6,9 @@ const redisClient = createClient({
   socket: {
     host: process.env.REDIS_HOST,
     port: process.env.REDIS_PORT,
-    // 可选：连接超时设置（毫秒）
     connectTimeout: 5000
   },
-
-  // 认证配置（如果Redis设置了密码）
   password: process.env.REDIS_PASSWORD,
-
-  // 数据库编号（默认0）
   database: 0
 });
 
