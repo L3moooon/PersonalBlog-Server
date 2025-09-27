@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const handler = require('@controllers/admin/login');
+const handler = require('@controllers/admin/user');
+const { verifyToken } = require('@middleware/auth'); // 引入中间件
 
-router.post('/login', handler.login);//管理员登录
-router.post('/register', handler.register);//管理员注册
-router.post('/getEmailCaptcha', handler.getEmailCaptcha);//获取邮箱验证码
+router.use(verifyToken)
+router.get('/getAdminList', handler.getAdminList);//获取所有管理员列表
 
 module.exports = router;

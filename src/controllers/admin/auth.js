@@ -1,11 +1,10 @@
-//后台登录
 const IP2Region = require('ip2region').default;
 const IPquery = new IP2Region();
 const jwt = require('jsonwebtoken');
 const { secretKey } = require('@config/jwt'); // 引入固定密钥
 const { query } = require('@config/db-util');
 const redisClient = require('@config/redis')
-const transporter = require('@config/nodeMailer');
+const transporter = require('@config/mailer');
 //管理员登录
 exports.login = async (req, res) => {
   const { type } = req.body;
@@ -95,6 +94,7 @@ exports.login = async (req, res) => {
       componentKeys: [],
       buttonKeys: []
     }
+    console.log(userInfo);
     userInfo.map(item => {
       switch (item.permission_type) {
         case 1:
@@ -121,7 +121,8 @@ exports.login = async (req, res) => {
     const address = JSON.stringify(IPquery.search(ip));
     //将ip数据添加到数据库
     const sqlString2 = 'UPDATE admin_account SET ip = ?, location = ? ,last_login_time = CURRENT_TIMESTAMP WHERE account = ?';
-    await query(sqlString2, [ip, address, account]);
+    await query(sqlString2, [ip, address, loginAccount]);
+    console.log(permission);
     return res.json({
       code: 1,
       token,

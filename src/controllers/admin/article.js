@@ -1,5 +1,3 @@
-//后台文章管理
-const db = require('@config/db');
 const { query } = require('@config/db-util');
 // 后台获取所有文章（支持分页、日期筛选和搜索）
 exports.getArticleList = async (req, res) => {
@@ -62,7 +60,7 @@ exports.getArticleList = async (req, res) => {
 
     // 执行查询
     const result = await query(sql, queryParams);
-    console.log(result);
+    // console.log(result);
     // 处理标签格式
     if (result.length > 0) {
       result.forEach(v => {
@@ -151,45 +149,43 @@ exports.deleteArticle = async (req, res) => {
     const sqlString2 = 'DELETE FROM article WHERE id=?'
     await query(sqlString1, [id])
     await query(sqlString2, [id])
-    return res.send({ status: 1, message: '删除成功！' })
+    return res.send({ code: 1, msg: '删除成功！' })
   } catch (error) {
-    return res.send({ status: 0, message: error.message });
+    return res.status(400).send({ code: 0, msg: error.message });
   }
 }
 
-
-
-
 //新增标签
 exports.addTag = async (req, res) => {
-  const { name } = req.body
-  const sqlString = "INSERT INTO tag(tag_name) VALUES (?) "
-  db.query(sqlString, [name], (err, row) => {
-    if (err) {
-      return res.send({ code: 0, message: err })
-    }
-    return res.send({ status: 1, message: '添加成功' })
-  })
+  try {
+    const { name } = req.body
+    const sqlString = "INSERT INTO tag(tag_name) VALUES (?) "
+    await query(sqlString, [name])
+    return res.send({ code: 1, msg: '添加成功' })
+  } catch (error) {
+    return res.status(400).send({ code: 0, msg: error.message });
+  }
+
 }
 //删除标签
-exports.delTag = async (req, res) => {
-  const { id } = req.body
-  const sqlString = "DELETE FROM tag WHERE id=?"
-  db.query(sqlString, [id], (err, row) => {
-    if (err) {
-      return res.send({ code: 0, message: err })
-    }
-    return res.json({ status: 1, message: '删除成功' })
-  })
+exports.deleteTag = async (req, res) => {
+  try {
+    const { id } = req.params
+    const sqlString = "DELETE FROM tag WHERE id=?"
+    await query(sqlString, [id])
+    return res.json({ code: 1, msg: '删除成功' })
+  } catch (error) {
+    return res.status(400).send({ code: 0, msg: error.message });
+  }
 }
 
 //获取标签列表
 exports.getTagList = async (req, res) => {
-  const sqlString = "SELECT * FROM tag"
-  db.query(sqlString, (err, row) => {
-    if (err) {
-      return res.send({ code: 0, message: err })
-    }
-    return res.json({ status: 1, data: row })
-  })
+  try {
+    const sqlString = "SELECT * FROM tag"
+    const data = await query(sqlString)
+    return res.send({ code: 0, msg: '请求成功', data });
+  } catch (error) {
+    return res.status(400).send({ code: 0, msg: error.message });
+  }
 }
