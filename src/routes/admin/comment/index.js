@@ -4,7 +4,7 @@ const handler = require('@controllers/admin/comment');
 const { verifyToken } = require('@middleware/auth'); // 引入中间件
 
 router.use(verifyToken)
-router.post('/getComments', handler.getCommentPanel);//获取评论
-router.post('/delComment', handler.delComment);//删除评论
+router.get('/getComments', handler.getCommentPanel);//获取评论
+router.delete('/deleteComment/:id', handler.deleteComment);//删除评论
 
 module.exports = router;

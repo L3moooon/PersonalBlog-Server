@@ -10,8 +10,8 @@ exports.info = async (req, res) => {
   const sqlString = `
     SELECT 
       DATEDIFF(NOW(), FROM_UNIXTIME(?)) AS run_days,
-      (SELECT COUNT(*) FROM web_account WHERE DATE(create_time) = CURDATE()) AS today_visits,
-      (SELECT COUNT(*) FROM web_account) AS total_visits,
+      (SELECT COUNT(*) FROM web_account WHERE last_login_time >= CURDATE() AND last_login_time < CURDATE() + INTERVAL 1 DAY) AS today_visits,
+      (SELECT SUM(visited_count) FROM web_account) AS total_visits,
       (SELECT COUNT(*) FROM article) AS article_count,
       (SELECT COUNT(*) FROM comment) AS comment_count,
       TIMESTAMPDIFF(DAY, (SELECT last_login_time FROM admin_account WHERE id = 1), NOW()) AS last_activity
@@ -42,7 +42,6 @@ exports.info = async (req, res) => {
 //获取网站主题相关信息
 exports.theme = async (req, res) => {
   try {
-    console.log(11111);
     const sqlString1 = 'SELECT * FROM admin WHERE id=1';
     const sqlString2 = 'SELECT * FROM admin_saying WHERE user_id=1';
     const sqlString3 = 'SELECT * FROM admin_url WHERE user_id=1';

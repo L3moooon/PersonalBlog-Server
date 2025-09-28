@@ -12,7 +12,7 @@ exports.getCommentPanel = async (req, res) => {
   }
 }
 //删除评论
-exports.delComment = async (req, res) => {
+exports.deleteComment = async (req, res) => {
   try {
     const { id } = req.body
     const sqlString = 'DELETE FROM comment WHERE id=?'

@@ -95,9 +95,9 @@ exports.getArticleList = async (req, res) => {
 //新增文章
 exports.addArticle = async (req, res) => {
   try {
-    const { title, cover_img, abstract, content, status, tag } = req.body
-    const sqlString1 = 'INSERT INTO article(title,cover_img,abstract,content,status) VALUES(?,?,?,?,?)'
-    const addArticleResult = await query(sqlString1, [title, cover_img, abstract, content, status])
+    const { title, cover_img, abstract, content, tag } = req.body
+    const sqlString1 = 'INSERT INTO article(title,cover_img,abstract,content) VALUES(?,?,?,?)'
+    const addArticleResult = await query(sqlString1, [title, cover_img, abstract, content])
     const articleId = addArticleResult.insertId;
     if (tag && tag.length > 0) {
       const tagValues = tag.map(tagId => [articleId, tagId]);
