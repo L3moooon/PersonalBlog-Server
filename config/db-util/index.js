@@ -5,8 +5,10 @@ const pool = mysql.createPool({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  waitForConnections: true,
+  connectionLimit: 10,  // 最大连接数
+  queueLimit: 0
 })
-
 // 封装query函数，返回Promise
 exports.query = (sql, params) => {
   return new Promise((resolve, reject) => {

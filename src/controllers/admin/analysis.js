@@ -4,10 +4,10 @@ exports.getNumData = async (req, res) => {
   try {
     const sqlString = `
     SELECT 
-      (SELECT SUM(visited_count) AS total_views FROM web_account) AS total_visits,
+      (SELECT CAST(SUM(visited_count) AS UNSIGNED) FROM web_account) AS total_visits,
       (SELECT COUNT(*) FROM article) AS article_count,
       (SELECT COUNT(*) FROM comment) AS comment_count,
-      (SELECT SUM(like) FROM article) AS like_count,
+      (SELECT CAST(SUM(star) AS UNSIGNED) FROM article) AS star_count
   `;
     const result = await query(sqlString)
     const data = result[0]
@@ -18,7 +18,7 @@ exports.getNumData = async (req, res) => {
         total_visits: data.total_visits,
         article_count: data.article_count,
         comment_count: data.comment_count,
-        like_count: data.like_count
+        star_count: data.star_count
       }
     });
   } catch (error) {
@@ -36,7 +36,6 @@ exports.getGeoData = async (req, res) => {
     const result = await query(sqlString)
     const geo = {}
     result.map(item => {
-      console.log(item);
       const addressObj = JSON.parse(item.address);
       const province = addressObj.province;
       if (province) {

@@ -21,6 +21,6 @@ routeFiles.forEach((file) => {
   app.use(`/${basePath}`, route)//注册路由
 });
 
-app.listen(process.env.PORT, () => {
-  console.log(`Server is running on http://127.0.0.1:${process.env.PORT}`)
+app.listen(process.env.HTTP_PORT, () => {
+  console.log(`Server is running on http://127.0.0.1:${process.env.HTTP_PORT}`)
 })
