@@ -114,7 +114,7 @@ exports.updateArticle = async (req, res) => {
   try {
     const { id, tag, ...otherFields } = req.body;
     if (!id) {
-      return res.send({ code: 0, msg: '文章ID不能为空' });
+      return res.status(400).send({ code: 0, msg: '文章ID不能为空' });
     }
     const allowFields = ['title', 'cover_img', 'abstract', 'content', 'status', 'top'];
     const [updateFields, updateValues] = Object.entries(otherFields)
@@ -125,9 +125,16 @@ exports.updateArticle = async (req, res) => {
         return [fields, values];
       }, [[], []]);
     updateValues.push(id); // WHERE条件的id
+    if ('content' in otherFields) {
+      updateFields.push('last_edit_date = CURRENT_TIMESTAMP')
+    }
     // 执行文章更新
     const sqlString1 = `UPDATE article SET ${updateFields.join(', ')} WHERE id = ?`;
+    console.log(sqlString1);
+    console.log(updateFields, updateValues);
+
     await query(sqlString1, updateValues);
+
     // 处理标签更新
     if (tag !== undefined) {
       await query("DELETE FROM article_tag_relation WHERE article_id=?", [id]);
