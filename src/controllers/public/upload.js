@@ -1,40 +1,54 @@
-const fs = require('fs');
-const path = require('path');
-const ossClient = require('@config/oss')
+const fs = require("fs");
+const path = require("path");
+const ossClient = require("@config/oss");
 
 // 上传文件到OSS
 exports.upload = async (req, res) => {
   try {
     if (!req.file) {
-      return res.status(400).json({ message: '请选择要上传的文件' });
+      return res.status(400).json({ message: "请选择要上传的文件" });
     }
     const localFilePath = req.file.path;
     const fileExt = path.extname(req.file.originalname);
 
     // 根据文件类型设置OSS中的存储路径
-    const fileType = req.file.mimetype.startsWith('image/') ? 'images' : 'videos';
+    // const fileType = req.file.mimetype.startsWith('image/') ? 'images' : 'videos';
+    let fileType;
+    // 按mimetype前缀依次判断文件类型
+    if (mimetype.startsWith("image/")) {
+      fileType = "images"; // 图片类型（jpg、png、gif等）
+    } else if (mimetype.startsWith("video/")) {
+      fileType = "videos"; // 视频类型（mp4、avi、mov等）
+    } else if (mimetype.startsWith("audio/")) {
+      fileType = "audios"; // 音乐/音频类型（mp3、wav、flac等）
+    } else {
+      fileType = "others"; // 其他类型（如文档、压缩包等，可根据需求定义）
+    }
     const ossFilePath = `${fileType}/${Date.now()}${fileExt}`;
 
     // 上传文件到OSS
     const result = await ossClient.put(ossFilePath, localFilePath);
-    const pathUrl = result.url.replace("http://willi-bucket.oss-cn-beijing.aliyuncs.com", "")
+    const pathUrl = result.url.replace(
+      "http://willi-bucket.oss-cn-beijing.aliyuncs.com",
+      ""
+    );
     console.log(pathUrl);
     // 删除本地临时文件
     fs.unlinkSync(localFilePath);
     // 返回上传结果，包含文件URL
     return res.json({
       status: 1,
-      message: '文件上传成功',
+      message: "文件上传成功",
       data: {
         name: req.file.originalname,
         url: pathUrl,
-      }
+      },
     });
   } catch (error) {
-    console.error('上传失败:', error);
+    console.error("上传失败:", error);
     res.status(500).json({
-      message: '文件上传失败',
-      error: error.message
+      message: "文件上传失败",
+      error: error.message,
     });
   }
-}
+};
