@@ -1,12 +1,12 @@
 {
-  "compilerOptions": {
-    "baseUrl": ".", // 基础路径，通常设为项目根目录
-    "paths": {
-      "@controllers/*": ["src/controllers/*"],
-      "@config/*": ["config/*"],
-      "@middleware/*": ["src/middleware/*"]
-    }
-  },
-  "include": ["src/**/*", "lib/**/*"], // 包含的文件目录
-  "exclude": ["node_modules", "dist"] // 排除的目录
+	"compilerOptions": {
+		"baseUrl": ".", // 基础路径，通常设为项目根目录
+		"paths": {
+			"@controllers/*": ["src/controllers/*"],
+			"@config/*": ["config/*"],
+			"@middleware/*": ["src/middleware/*"]
+		}
+	},
+	"include": ["src/**/*", "lib/**/*"], // 包含的文件目录
+	"exclude": ["node_modules", "dist"] // 排除的目录
 }

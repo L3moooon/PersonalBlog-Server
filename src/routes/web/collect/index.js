@@ -1,6 +1,6 @@
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const handler = require('@controllers/web/collect');
+const handler = require("@controllers/web/collect");
 
-router.post('/performance', handler.performance);//收集前台性能信息
+router.post("/performance", handler.performance); //收集前台性能信息
 module.exports = router;

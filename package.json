@@ -1,38 +1,38 @@
 {
-  "name": "personal-blog-serve",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {
-    "dev": "nodemon src/index.js",
-    "test": "jest",
-    "db:backup": "node scripts/db/backup/index.js",
-    "db:backup:now": "node scripts/db/backup/index.js --immediate"
-  },
-  "author": "宵时雨",
-  "license": "ISC",
-  "dependencies": {
-    "ali-oss": "^6.23.0",
-    "body-parser": "^1.20.3",
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^4.21.2",
-    "glob": "^11.0.0",
-    "ip2region": "^2.3.0",
-    "jsonwebtoken": "^9.0.2",
-    "module-alias": "^2.2.3",
-    "multer": "^2.0.2",
-    "mysql2": "^3.13.0",
-    "node-schedule": "^2.1.1",
-    "nodemailer": "^7.0.6",
-    "nodemon": "^3.1.9",
-    "redis": "^5.8.2",
-    "sequelize": "^6.37.7",
-    "socket.io": "^4.8.1"
-  },
-  "_moduleAliases": {
-    "@controllers": "./src/controllers/",
-    "@config": "./config",
-    "@middleware": "./src/middleware"
-  }
+	"name": "personal-blog-serve",
+	"version": "1.0.0",
+	"description": "",
+	"main": "index.js",
+	"scripts": {
+		"dev": "nodemon src/index.js",
+		"test": "jest",
+		"db:backup": "node scripts/db/backup/index.js",
+		"db:backup:now": "node scripts/db/backup/index.js --immediate"
+	},
+	"author": "宵时雨",
+	"license": "ISC",
+	"dependencies": {
+		"ali-oss": "^6.23.0",
+		"body-parser": "^1.20.3",
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.1",
+		"express": "^4.21.2",
+		"glob": "^11.0.0",
+		"ip2region": "^2.3.0",
+		"jsonwebtoken": "^9.0.2",
+		"module-alias": "^2.2.3",
+		"multer": "^2.0.2",
+		"mysql2": "^3.13.0",
+		"node-schedule": "^2.1.1",
+		"nodemailer": "^7.0.6",
+		"nodemon": "^3.1.9",
+		"redis": "^5.8.2",
+		"sequelize": "^6.37.7",
+		"socket.io": "^4.8.1"
+	},
+	"_moduleAliases": {
+		"@controllers": "./src/controllers/",
+		"@config": "./config",
+		"@middleware": "./src/middleware"
+	}
 }
