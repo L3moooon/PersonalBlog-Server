@@ -23,7 +23,6 @@ exports.info = async (req, res) => {
 		}
 		// 对查询结果做简单格式化（如最后活动时间处理，若需要可转成更易读格式）
 		const data = result[0];
-		console.log(data);
 		res.send({
 			status: 1,
 			message: "请求成功",
@@ -68,8 +67,8 @@ exports.theme = async (req, res) => {
 			bg_img.push(element.img_url);
 		});
 		return res.json({
-			status: 1,
-			message: "请求成功！",
+			code: 1,
+			msg: "请求成功！",
 			data: { ...result1[0], saying, url, bg_img },
 		});
 	} catch (err) {
@@ -95,7 +94,7 @@ exports.modifyTheme = async (req, res) => {
 			query(delString3),
 		]);
 		const sqlString1 =
-			"UPDATE admin SET nickname=?,portrait=?,motto=?,welcome=? WHERE id=1"; //更新user表
+			"UPDATE admin SET nickname = ?, portrait = ?, motto = ?, welcome = ? WHERE id = 1"; //更新user表
 		const sqlString2 = "INSERT INTO admin_saying(user_id,saying) VALUES?; "; //批量更新user_saying表
 		const sqlString3 = " INSERT INTO admin_url(user_id,name,address) VALUES?;"; //批量更新use_url表
 		const sqlString4 = " INSERT INTO web_bg_img(img_url) VALUES?;"; //批量更新web_bg_img表
@@ -110,33 +109,97 @@ exports.modifyTheme = async (req, res) => {
 		// 回滚事务
 		console.error(error);
 		res.send({
-			status: 0,
-			message: "更新失败",
+			code: 0,
+			msg: "更新失败",
 		});
 	}
 };
 
 //获取首页文章列表
+// 获取首页文章列表（带分页）
 exports.getHomeArticle = async (req, res) => {
 	try {
-		const sqlString =
-			"SELECT a.*, GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,(SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count FROM article a LEFT JOIN article_tag_relation at ON a.id = at.article_id  LEFT JOIN tag t ON at.tag_id = t.id WHERE a.status = 1 GROUP BY a.id ORDER BY a.top DESC, a.publish_date DESC;";
-		const result = await query(sqlString);
-		if (result.length > 0) {
-			result.forEach((v) => {
-				if (v.tag && v.tag.length > 0) {
-					const tagArray = v.tag.split(",");
-					// 转换为[{id,name}]格式
-					v.tag = tagArray.map((tag) => {
+		// 1. 解析并校验分页参数（确保是正整数，避免异常值）
+		let { tags = [], pageNo = 1, pageSize = 5 } = req.query;
+		// 转换为整数，若转换失败或小于1，重置为默认值
+		pageNo = parseInt(pageNo, 10);
+		pageSize = parseInt(pageSize, 10);
+		pageNo = isNaN(pageNo) || pageNo < 1 ? 1 : pageNo;
+		pageSize = isNaN(pageSize) || pageSize < 1 ? 5 : pageSize;
+		const offset = (pageNo - 1) * pageSize;
+		let tagWhere = ""; // 标签筛选条件（默认空）
+		const queryParams = []; // SQL 参数数组（避免注入）
+		// 若 tags 数组有值，拼接 IN 条件
+		if (tags.length > 0) {
+			// 占位符：根据 tag 数量生成 ?,?,?（如 3个标签则 ?,,?）
+			const placeholders = tags.map(() => "?").join(",");
+			tagWhere = `AND at.tag_id IN (${placeholders})`;
+			// 将 tagId 加入参数数组（顺序与占位符对应）
+			queryParams.push(...tags);
+		}
+		queryParams.push(offset, pageSize);
+		const getListSql = `
+      SELECT 
+        a.*, 
+        GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,
+        (SELECT COUNT(*) FROM comment c WHERE c.article_id = a.id) AS comment_count 
+      FROM article a 
+      LEFT JOIN article_tag_relation at ON a.id = at.article_id  
+      LEFT JOIN tag t ON at.tag_id = t.id 
+      WHERE a.status = 1 ${tagWhere}
+      GROUP BY a.id 
+      ORDER BY a.top DESC, a.publish_date DESC 
+      LIMIT ?, ?;
+    `;
+		let articleList = await query(getListSql, queryParams);
+
+		const getTotalSql = `
+      SELECT COUNT(DISTINCT a.id) AS total 
+      FROM article a 
+      LEFT JOIN article_tag_relation at ON a.id = at.article_id  
+      LEFT JOIN tag t ON at.tag_id = t.id 
+      WHERE a.status = 1 ${tagWhere};
+    `;
+		const totalQueryParams = tags.length > 0 ? tags : [];
+		const totalResult = await query(getTotalSql, totalQueryParams);
+		const total = totalResult[0]?.total || 0;
+
+		// 5. 处理标签格式：转换为 [{id, name}] 数组（与原逻辑一致）
+		if (articleList.length > 0) {
+			articleList.forEach((item) => {
+				if (item.tag && item.tag.trim().length > 0) {
+					const tagArray = item.tag.split(",").map((tag) => tag.trim());
+					item.tag = tagArray.map((tag) => {
 						const [id, name] = tag.split(":");
-						return { id: parseInt(id), name };
+						return {
+							id: parseInt(id, 10) || 0, // 避免id解析失败
+							name: name || "未知标签", // 兜底处理
+						};
 					});
+				} else {
+					item.tag = []; // 无标签时返回空数组，避免前端处理undefined
 				}
 			});
 		}
-		return res.json({ status: 1, message: "请求成功！", data: result });
+
+		// 6. 返回分页数据：包含当前页列表、总条数、当前页码、每页条数
+		return res.json({
+			code: 1,
+			msg: "请求成功！",
+			data: articleList,
+			pagination: {
+				total,
+				pageNo: pageNo,
+				pageSize: pageSize,
+			},
+		});
 	} catch (error) {
-		return res.send({ status: 0, message: error.message });
+		console.error("获取首页文章列表失败：", error); // 打印错误日志，便于排查
+		return res.status(500).json({
+			// 服务器错误返回500状态码
+			code: 0,
+			msg: "获取文章列表失败，请稍后重试！", // 友好提示，避免暴露敏感信息
+		});
 	}
 };
 //获取推荐文章
@@ -146,14 +209,18 @@ exports.getRecommendArticle = async (req, res) => {
 		const page = parseInt(req.query.page) || 1;
 		const limit = parseInt(req.query.limit) || 5;
 		const offset = (page - 1) * limit;
-		const sqlString1 = `SELECT id, title, cover_img, publish_date 
-       FROM article
-       WHERE status = '1' 
-       ORDER BY view DESC 
-       LIMIT ?, ?`;
-		const sqlString2 = `SELECT COUNT(*) as total 
-       FROM article
-       WHERE status = '1'`;
+		const sqlString1 = `
+      SELECT id, title, cover_img, publish_date 
+        FROM article
+        WHERE status = '1' 
+        ORDER BY view DESC 
+        LIMIT ?, ?
+      `;
+		const sqlString2 = `
+      SELECT COUNT(*) as total 
+        FROM article
+        WHERE status = '1'
+    `;
 		// 查询当前页文章
 		const articleRes = await query(sqlString1, [offset, limit]);
 		const moreRes = await query(sqlString2);
@@ -169,6 +236,32 @@ exports.getRecommendArticle = async (req, res) => {
 		res.status(500).json({
 			success: false,
 			message: "服务器错误，获取推荐文章失败",
+		});
+	}
+};
+
+exports.getTagCloud = async (req, res) => {
+	try {
+		const sqlString = `
+      SELECT t.id, t.tag_name, COUNT(DISTINCT a.id) AS article_count
+      FROM tag t
+      LEFT JOIN article_tag_relation at ON t.id = at.tag_id
+      LEFT JOIN article a ON at.article_id = a.id AND a.status = 1
+      GROUP BY t.id, t.tag_name
+      HAVING article_count > 0
+      ORDER BY article_count DESC;
+    `;
+		const tags = await query(sqlString);
+		return res.json({
+			code: 1,
+			msg: "请求成功！",
+			data: tags,
+		});
+	} catch (error) {
+		console.error("获取标签云失败:", error);
+		return res.status(500).json({
+			code: 0,
+			msg: "服务器错误，获取标签云失败",
 		});
 	}
 };
