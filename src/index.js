@@ -1,12 +1,15 @@
 require("module-alias/register"); //引入路径别名
 require("dotenv").config(); //引入环境变量
 
+const http = require("http");
 const express = require("express");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const glob = require("glob");
 const app = express();
+const server = http.createServer(app);
 const path = require("path");
+const initializeWebSocket = require("./ws/server");
 
 app.use(cors()); //解决跨域
 app.use(bodyParser.json());
@@ -23,6 +26,7 @@ routeFiles.forEach((file) => {
 	app.use(`/${basePath}`, route); //注册路由
 });
 
-app.listen(process.env.HTTP_PORT, () => {
+initializeWebSocket(server); //webSocket初始化
+server.listen(process.env.HTTP_PORT, () => {
 	console.log(`Server is running on http://127.0.0.1:${process.env.HTTP_PORT}`);
 });

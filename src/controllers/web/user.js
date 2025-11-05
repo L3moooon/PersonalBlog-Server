@@ -19,7 +19,7 @@ exports.visited = async (req, res) => {
 		}
 		//首先查询之前有无访问记录
 		const sqlString = `
-      SELECT id, name, portrait, last_login_time, visited_count 
+      SELECT id, name, portrait, last_login_time, visited_count, address 
         FROM web_account 
         WHERE identify = ?;
       `;
@@ -40,15 +40,17 @@ exports.visited = async (req, res) => {
 					: result[0].visited_count;
 			const sqlString1 = `
         UPDATE web_account 
-          SET ip = ?, address = ?,agent = ?,last_login_time = CURRENT_TIMESTAMP, visited_count = ? 
+          SET ip = ?, address = ?, agent = ?, last_login_time = CURRENT_TIMESTAMP, visited_count = ? 
           WHERE identify = ?;
         `;
 			await query(sqlString1, [ip, ipAddress, agent, count, identify]);
 		}
 		//无访问记录，插入表中
 		else {
-			const sqlString2 =
-				"INSERT INTO web_account(identify,name,ip,address,agent,last_login_time) VALUES(?,?,?,?,?,CURRENT_TIMESTAMP)";
+			const sqlString2 = `
+        INSERT INTO web_account(identify, name, ip, address, agent, last_login_time) 
+        VALUES(?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+      `;
 			const name = "游客 " + identify;
 			const insertRes = await query(sqlString2, [
 				identify,
@@ -74,14 +76,20 @@ exports.visited = async (req, res) => {
 //更改游客数据
 exports.modifyInfo = async (req, res) => {
 	try {
-		const { name, portrait } = req.body;
-		res.send({ status: 1, message: "发送成功" });
+		const { id, name, portrait } = req.body;
+		const sqlString1 = `
+    UPDATE web_account 
+      SET name = ?, portrait = ?
+      WHERE identify = ?;
+    `;
+		await query(sqlString1, [name, portrait, id]);
+		res.send({ code: 1, msg: "发送成功" });
 	} catch (error) {}
 };
 
 exports.trackInfo = async (req, res) => {
 	try {
-		console.log(req.body);
+		// console.log(req.body);
 		// const { identify, track_info } = req.body;
 		// if (isEmptyString(identify) || isEmptyString(track_info)) {
 		// 	return res.status(400).json({
