@@ -1,18 +1,17 @@
-const db = require("@config/db");
 const { query } = require("@config/db-util");
 
 //根据id获取文章
 exports.getArticle = async (req, res) => {
-	const { id } = req.body;
-	const sqlString = "SELECT * FROM article WHERE id=?";
-	db.query(sqlString, [id], (err, result) => {
-		if (err) {
-			return res.send({ status: 0, message: err.message });
+	try {
+		const { id } = req.body;
+		const sqlString = "SELECT * FROM article WHERE id=?";
+		const data = await query(sqlString, [id]);
+		if (data.length > 0) {
+			return res.json({ status: 1, message: "请求成功！", data: data[0] });
 		}
-		if (result.length > 0) {
-			return res.json({ status: 1, message: "请求成功！", data: result[0] });
-		}
-	});
+	} catch (error) {
+		return res.json({ status: 1, message: "请求成功！", data: result[0] });
+	}
 };
 
 //更新文章访问量

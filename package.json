@@ -1,13 +1,12 @@
 {
-	"name": "personal-blog-serve",
+	"name": "personal-blog-server",
 	"version": "1.0.0",
 	"description": "",
 	"main": "index.js",
 	"scripts": {
 		"dev": "nodemon src/index.js",
-		"test": "jest",
-		"db:backup": "node scripts/db/backup/index.js",
-		"db:backup:now": "node scripts/db/backup/index.js --immediate"
+		"db:backup": "nodemon src/scripts/backup/index.js",
+		"db:backup:now": "nodemon src/scripts/backup/index.js --immediate"
 	},
 	"author": "宵时雨",
 	"license": "ISC",

@@ -6,10 +6,11 @@ module.exports = function initializeWebSocket(server) {
 			origin: [
 				`http://localhost:${process.env.FRONTEND_WEB_PORT}`,
 				`http://localhost:${process.env.FRONTEND_ADMIN_PORT}`,
-				`http://localhost:8080`,
 			],
 			methods: ["GET", "POST"],
 		},
+		pingInterval: 25000, // 每 25 秒发送一次心跳
+		pingTimeout: 5000, // 5 秒内未收到响应则断开
 	});
 	// 存储在线用户(前台)
 	const onlineUsers = new Map();

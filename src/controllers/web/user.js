@@ -25,11 +25,13 @@ exports.visited = async (req, res) => {
       `;
 		let result = await query(sqlString, [identify]);
 		// console.log(result);
+
+		//更新ip地址
+		const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+		const ipAddress = JSON.stringify(IPquery.search(ip));
+		console.log(ip);
 		//有访问记录，直接更新数据库
 		if (result && result.length > 0) {
-			//更新ip地址
-			const ip = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
-			const ipAddress = JSON.stringify(IPquery.search(ip));
 			//判断上次登陆时间，若间隔时间大于1h，则访问次数visited_count加一
 			const oneHourAgo = new Date(new Date().getTime() - 60 * 60 * 1000);
 			const lastLoginTime = result[0].last_login_time;
@@ -62,8 +64,10 @@ exports.visited = async (req, res) => {
 			result = [
 				{
 					id: insertRes.insertId,
-					name: identify,
+					name,
 					portrait: null,
+					lastLoginTime: null,
+					address: ipAddress,
 				},
 			];
 		}
@@ -84,9 +88,12 @@ exports.modifyInfo = async (req, res) => {
     `;
 		await query(sqlString1, [name, portrait, id]);
 		res.send({ code: 1, msg: "发送成功" });
-	} catch (error) {}
+	} catch (error) {
+		return res.send({ status: 0, message: error.message });
+	}
 };
 
+//埋点
 exports.trackInfo = async (req, res) => {
 	try {
 		// console.log(req.body);

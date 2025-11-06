@@ -10,7 +10,7 @@ const router = express.Router();
 // 配置Multer用于处理文件上传（临时存储在本地）
 const storage = multer.diskStorage({
 	destination: (req, file, cb) => {
-		const uploadDir = "./temp-uploads";
+		const uploadDir = "./temp";
 		if (!fs.existsSync(uploadDir)) {
 			fs.mkdirSync(uploadDir, { recursive: true });
 		}

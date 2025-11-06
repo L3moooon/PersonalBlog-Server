@@ -1,5 +1,4 @@
 //前台
-const db = require("../../../config/db");
 const { query, getConnection } = require("@config/db-util");
 
 // 网站上线时间戳（秒级）
@@ -7,7 +6,8 @@ const ESTABLISHING_DATE = 1756111504; //2025/8/25 16:45:00
 
 // 获取网站运转信息
 exports.info = async (req, res) => {
-	const sqlString = `
+	try {
+		const sqlString = `
     SELECT 
       DATEDIFF(NOW(), FROM_UNIXTIME(?)) AS run_days,
       (SELECT COUNT(*) FROM web_account WHERE last_login_time >= CURDATE() AND last_login_time < CURDATE() + INTERVAL 1 DAY) AS today_visits,
@@ -17,10 +17,7 @@ exports.info = async (req, res) => {
       TIMESTAMPDIFF(DAY, (SELECT last_login_time FROM admin_account WHERE id = 1), NOW()) AS last_activity
     FROM DUAL;
   `;
-	db.query(sqlString, [ESTABLISHING_DATE], (err, result) => {
-		if (err) {
-			return res.send({ status: 0, message: err.message });
-		}
+		const result = await query(sqlString, [ESTABLISHING_DATE]);
 		// 对查询结果做简单格式化（如最后活动时间处理，若需要可转成更易读格式）
 		const data = result[0];
 		res.send({
@@ -35,7 +32,9 @@ exports.info = async (req, res) => {
 				last_activity: data.last_activity,
 			},
 		});
-	});
+	} catch (error) {
+		return res.json({ status: 0, message: err.message });
+	}
 };
 
 //获取网站主题相关信息
@@ -263,5 +262,95 @@ exports.getTagCloud = async (req, res) => {
 			code: 0,
 			msg: "服务器错误，获取标签云失败",
 		});
+	}
+};
+
+function highlightKeyword(text, keyword) {
+	if (!text) return ""; // 处理空文本
+	const regex = new RegExp(keyword, "gi");
+	return text.replace(regex, (match) => `<em>${match}</em>`);
+}
+function getContentSnippet(content, keyword, targetLength = 200) {
+	if (!content) return "";
+	// 移除原始内容中的HTML标签（避免干扰截取）
+	const pureContent = content.replace(/<[^>]+>/g, "");
+	const keywordLower = keyword.toLowerCase();
+	const contentLower = pureContent.toLowerCase();
+
+	// 1. 查找关键词首次出现的位置（不区分大小写）
+	const keywordIndex = contentLower.indexOf(keywordLower);
+
+	// 2. 如果内容中无关键词，返回前300字（带省略号）
+	if (keywordIndex === -1) {
+		return pureContent.length <= targetLength
+			? pureContent
+			: pureContent.slice(0, targetLength) + "...";
+	}
+
+	// 3. 以关键词为中心截取上下文（前后各分配约一半长度）
+	const halfLength = Math.floor(targetLength / 2);
+	let start = Math.max(0, keywordIndex - halfLength); // 避免起始位置为负数
+	let end = Math.min(
+		pureContent.length,
+		keywordIndex + keyword.length + halfLength
+	); // 避免超出内容长度
+
+	// 4. 调整截取范围，确保总长度接近目标值
+	const actualLength = end - start;
+	if (actualLength < targetLength) {
+		const diff = targetLength - actualLength;
+		start = Math.max(0, start - Math.floor(diff / 2));
+		end = Math.min(pureContent.length, end + Math.ceil(diff / 2));
+	}
+
+	// 5. 截取片段并添加省略号（表示非完整内容）
+	let snippet = pureContent.slice(start, end);
+	if (start > 0) snippet = "..." + snippet;
+	if (end < pureContent.length) snippet += "...";
+
+	// 6. 高亮片段中的关键词
+	return highlightKeyword(snippet, keyword);
+}
+//搜索
+exports.search = async (req, res) => {
+	try {
+		const { keyword } = req.query;
+		if (!keyword || keyword.trim() === "") {
+			return res.status(400).json({
+				code: 0,
+				msg: "请输入搜索关键词",
+			});
+		}
+		const sqlString = `
+      SELECT id, title, abstract, content, publish_date 
+        FROM article
+        WHERE title LIKE ? OR abstract LIKE ? OR content LIKE ?;
+      `;
+		const data = await query(sqlString, [
+			`%${keyword}%`,
+			`%${keyword}%`,
+			`%${keyword}%`,
+		]);
+		console.log(keyword, data);
+		const highlightedArticles = data.map((article) => {
+			// 对标题和内容字段进行替换
+			const highlightedTitle = highlightKeyword(article.title, keyword);
+			const highlightedAbstract = highlightKeyword(article.abstract, keyword);
+			const highlightedContent = getContentSnippet(article.content, keyword);
+
+			return {
+				...article,
+				title: highlightedTitle,
+				abstract: highlightedAbstract,
+				content: highlightedContent,
+			};
+		});
+		return res.json({
+			code: 1,
+			msg: "搜索成功",
+			data: highlightedArticles,
+		});
+	} catch (error) {
+		return res.send({ code: 0, message: error.message });
 	}
 };

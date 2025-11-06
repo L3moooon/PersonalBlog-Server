@@ -1,5 +1,6 @@
 require("module-alias/register"); //引入路径别名
 require("dotenv").config(); //引入环境变量
+require("./scripts/backup/index"); //定时备份数据库
 
 const http = require("http");
 const express = require("express");
@@ -10,7 +11,6 @@ const app = express();
 const server = http.createServer(app);
 const path = require("path");
 const initializeWebSocket = require("./ws/server");
-
 app.use(cors()); //解决跨域
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
