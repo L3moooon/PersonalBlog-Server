@@ -4,7 +4,9 @@
 		"paths": {
 			"@controllers/*": ["src/controllers/*"],
 			"@config/*": ["config/*"],
-			"@middleware/*": ["src/middleware/*"]
+			"@middleware/*": ["src/middleware/*"],
+			"@utils/*": ["src/utils/*"],
+			"@scripts/*": ["/src/scripts/*"]
 		}
 	},
 	"include": ["src/**/*", "lib/**/*"], // 包含的文件目录

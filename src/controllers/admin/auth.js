@@ -4,7 +4,7 @@ const jwt = require("jsonwebtoken");
 const { secretKey } = require("@config/jwt"); // 引入固定密钥
 const { query } = require("@config/db-util");
 const redisClient = require("@config/redis");
-const transporter = require("@config/mailer");
+const sendMail = require("@utils/mailer");
 //管理员登录
 exports.login = async (req, res) => {
 	const { type } = req.body;
@@ -170,27 +170,9 @@ exports.register = async (req, res) => {
 };
 //忘记密码
 
-// 生成6位数字验证码
+// 工具函数-生成6位数字验证码
 function generateVerificationCode() {
 	return Math.floor(100000 + Math.random() * 900000).toString();
-}
-// 发送验证码到邮箱
-async function sendVerificationCode(email, code) {
-	try {
-		const info = await transporter.sendMail({
-			from: '"时雨博客" <1152818861@qq.com>',
-			to: email,
-			subject: "登录验证码",
-			text: `你的登录验证码是: ${code}，有效期5分钟。`,
-			html: `<p>你的登录验证码是: <strong>${code}</strong>，有效期5分钟。</p>`,
-		});
-
-		console.log("验证码邮件已发送:", info.messageId);
-		return true;
-	} catch (error) {
-		console.error("发送邮件失败:", error);
-		return false;
-	}
 }
 //获取邮箱验证码
 exports.getEmailCaptcha = async (req, res) => {
@@ -202,14 +184,16 @@ exports.getEmailCaptcha = async (req, res) => {
 		// 生成验证码
 		const code = generateVerificationCode();
 		// 存储验证码到Redis，设置5分钟过期
-		await redisClient.set(
-			`verification:${email}`,
-			code,
-			{ EX: 300 } // 300秒 = 5分钟
-		);
+		await redisClient.set(`verification:${email}`, code, { EX: 300 });
 
 		// 发送验证码邮件
-		const emailSent = await sendVerificationCode(email, code);
+		// const emailSent = await sendVerificationCode(email, code);
+		const emailSent = await sendMail({
+			to: email,
+			subject: "登录验证码",
+			text: `你的登录验证码是: ${code}，有效期5分钟。`,
+			html: `<p>你的登录验证码是: <strong>${code}</strong>，有效期5分钟。</p>`,
+		});
 		if (emailSent) {
 			res.json({ code: 1, msg: "验证码已发送到你的邮箱，请注意查收" });
 		} else {

@@ -1,12 +1,27 @@
+//单独启动脚本需要注意 环境变量和路径别名会失效
+require("module-alias/register"); //引入路径别名
+require("dotenv").config(); //引入环境变量
+
 const schedule = require("node-schedule");
 const fs = require("fs");
 const path = require("path");
 const ossClient = require("@config/oss");
-const zlib = require("zlib"); // Node.js 内置压缩模块，替代 gzip 命令（跨平台）
+const zlib = require("zlib");
+
+const { pipeline } = require("stream/promises");
 const { promisify } = require("util");
 const { exec } = require("child_process");
-const { dbConfig, dbBackupConfig } = require("@config/db-util");
 const { query } = require("@config/db-util");
+
+const dbBackupConfig = {
+	//备份
+	cronTime: "0 2 * * *", // 每天凌晨2点
+	backupDir: path.join(__dirname, "backups"),
+	keepDays: 7,
+	// OSS存储目录
+	folder: "db-backups",
+};
+let job = null;
 
 // 确保备份目录存在
 const backupDir = path.join(__dirname, "..", "..", "..", "temp");
@@ -15,10 +30,20 @@ if (!fs.existsSync(backupDir)) {
 }
 
 // 工具函数：格式化时间戳
-const getTimestamp = () => {
+function getTimestamp() {
 	const date = new Date();
 	return date.toISOString().replace(/[:T]/g, "-").split(".")[0]; // 格式：2023-10-05-14-30-22
-};
+}
+function getSize(size) {
+	const units = ["B", "KB", "MB", "GB"];
+	let i = 0;
+	let res = size;
+	while (res > 1024) {
+		res = res / 1024;
+		i++;
+	}
+	return Math.floor(res) + units[i];
+}
 // 执行备份的函数
 async function backupDatabase() {
 	const logData = {
@@ -31,19 +56,21 @@ async function backupDatabase() {
 	};
 	const startTime = Date.now();
 	const timestamp = getTimestamp();
-	const filename = `${dbConfig.database}-${timestamp}.sql`;
+	const filename = `${process.env.DB_DATABASE}-${timestamp}.sql`;
 	const filepath = path.join(backupDir, filename);
 	try {
 		// 构建mysqldump命令
-		const cmd = `mysqldump -h ${dbConfig.host} -P ${dbConfig.port} -u ${dbConfig.user} -p${dbConfig.password} ${dbConfig.database} > ${filepath}`;
+		const cmd = `mysqldump -h ${process.env.DB_HOST} -P ${process.env.DB_PORT} -u ${process.env.DB_USER} -p'${process.env.DB_PASSWORD}' ${process.env.DB_DATABASE} > ${filepath}`;
 
 		console.log(`开始备份数据库到 ${filepath}`);
 
 		await promisify(exec)(cmd); // 使用 promisify 转换为 Promise
+
+		logData.filename = filename;
 		// 获取文件大小
 		const stats = fs.statSync(filepath);
-		logData.file_size = stats.size;
-		console.log(`备份成功: ${filepath} (大小: ${stats.size} bytes)`);
+		logData.file_size = getSize(stats.size);
+		console.log(`备份成功: ${filepath} (大小: ${logData.file_size})`);
 		// 备份成功后压缩
 		const ossUrl = await compressBackup(filepath);
 		logData.oss_url = ossUrl;
@@ -51,6 +78,7 @@ async function backupDatabase() {
 	} catch (error) {
 		console.error(`备份失败: ${error.message}`);
 		logData.error_msg = error.message;
+		// logData.error_msg = error.message.replace(process.env.DB_PASSWORD, '******');
 	} finally {
 		// 计算耗时并记录日志
 		logData.duration = (Date.now() - startTime) / 1000;
@@ -94,7 +122,7 @@ async function uploadToOSS(filepath) {
 		fs.unlinkSync(filepath);
 		console.log(`已删除本地文件: ${filepath}`);
 
-		// 清理旧备份（如果有的话）
+		// 清理旧备份
 		await cleanOldBackups();
 		return result.url;
 	} catch (err) {
@@ -104,7 +132,7 @@ async function uploadToOSS(filepath) {
 async function cleanOldBackups() {
 	try {
 		const cutoffDate = new Date();
-		cutoffDate.setDate(cutoffDate.getDate() - dbBackupConfig.keepDays); // 保留最近 N 天
+		cutoffDate.setDate(cutoffDate.getDate() - dbBackupConfig.keepDays);
 
 		const files = fs.readdirSync(backupDir);
 		for (const file of files) {
@@ -125,7 +153,7 @@ const logToDatabase = async (logData) => {
 	try {
 		const sqlString = `
     INSERT INTO log_db 
-      (filename, file_size, oss_url, error_msg, duration, status, time) 
+      (file_name, file_size, oss_url, error_msg, duration, status, time) 
     VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
   `;
 		await query(sqlString, [
@@ -138,20 +166,33 @@ const logToDatabase = async (logData) => {
 		]);
 		console.log("备份日志已记录到数据库");
 	} catch (error) {
-		console.error("记录备份日志失败:", err.message);
+		console.error("记录备份日志失败:", error.message);
 	}
 };
 
-// 立即执行一次备份（可选）
+// 定时执行备份任务
+const startBackupJob = () => {
+	if (job) {
+		console.log("备份数据库定时任务已启动，无需重复启动");
+		return;
+	}
+	console.log(`备份数据库定时任务已启用，执行规则: ${dbBackupConfig.cronTime}`);
+	job = schedule.scheduleJob(dbBackupConfig.cronTime, () => {
+		backupDatabase().catch((err) => console.error("备份失败:", err));
+	});
+};
+
+const stopBackupJob = () => {
+	if (job) {
+		job.cancel();
+		job = null;
+		// console.log("备份数据库任务已停止");
+	}
+};
+
+// 立即执行一次备份
 if (process.argv.includes("--immediate")) {
 	backupDatabase();
 }
-// 定时执行备份任务（修复日志冗余问题）
-console.log(`已设置定时备份数据库任务，执行时间: ${dbBackupConfig.cronTime}`);
-// 定时执行备份任务
-const backupJob = schedule.scheduleJob(dbBackupConfig.cronTime, () => {
-	console.log("定时备份任务数据库任务开始执行");
-	backupDatabase().catch((err) => console.error("定时备份失败:", err));
-});
 
-module.exports = backupJob;
+module.exports = { startBackupJob, stopBackupJob };

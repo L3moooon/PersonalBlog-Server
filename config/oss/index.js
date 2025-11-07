@@ -10,10 +10,11 @@ const ossClient = new OSS(ossConfig);
 
 (async () => {
 	try {
-		const result = await ossClient.listBuckets();
+		await ossClient.listBuckets();
 		console.log("OSS 连接成功！");
 	} catch (error) {
 		console.error("OSS 连接失败：", error.message);
 	}
 })();
+
 module.exports = ossClient;

@@ -5,8 +5,9 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "nodemon src/index.js",
-		"db:backup": "nodemon src/scripts/backup/index.js",
-		"db:backup:now": "nodemon src/scripts/backup/index.js --immediate"
+		"backup": "nodemon src/scripts/backup/index.js  --immediate",
+		"reboot": "nodemon src/scripts/reboot/index.js --immediate",
+		"monitor": "nodemon src/scripts/monitor/index.js --immediate"
 	},
 	"author": "宵时雨",
 	"license": "ISC",
@@ -32,6 +33,8 @@
 	"_moduleAliases": {
 		"@controllers": "./src/controllers/",
 		"@config": "./config",
-		"@middleware": "./src/middleware"
+		"@middleware": "./src/middleware",
+		"@utils": "./src/utils",
+		"@scripts": "./src/scripts"
 	}
 }
