@@ -2,15 +2,8 @@ const { query } = require("@config/db-util");
 // 后台获取所有文章（支持分页、日期筛选和搜索）
 exports.getArticleList = async (req, res) => {
 	try {
-		// 从请求参数中获取分页、日期范围和搜索关键词
-		const {
-			pageNo = 1, // 页码，默认第1页
-			pageSize = 10, // 每页条数，默认10条
-			dateRange, // 日期范围，格式: [startDate, endDate]
-			searchKey, // 搜索关键词
-		} = req.query;
+		const { pageNo = 1, pageSize = 10, dateRange, searchKey } = req.query;
 		const offset = (pageNo - 1) * pageSize; // 计算分页偏移量
-		// 基础SQL
 		let sql = `
       SELECT a.*, 
              GROUP_CONCAT(t.id, ':', t.tag_name SEPARATOR ', ') AS tag,
@@ -19,7 +12,6 @@ exports.getArticleList = async (req, res) => {
       LEFT JOIN article_tag_relation at ON a.id = at.article_id  
       LEFT JOIN tag t ON at.tag_id = t.id 
     `;
-
 		// 条件部分
 		const whereConditions = [];
 		const queryParams = [];
@@ -28,12 +20,14 @@ exports.getArticleList = async (req, res) => {
 		if (dateRange && Array.isArray(dateRange) && dateRange.length === 2) {
 			const [startDate, endDate] = dateRange;
 			if (startDate) {
-				whereConditions.push("a.create_time >= ?");
-				queryParams.push(startDate);
+				const formattedStart = startDate.replace("T", " ").replace("Z", "");
+				whereConditions.push("a.publish_date >= ?");
+				queryParams.push(formattedStart);
 			}
 			if (endDate) {
-				whereConditions.push("a.create_time <= ?");
-				queryParams.push(endDate);
+				const formattedEnd = endDate.replace("T", " ").replace("Z", "");
+				whereConditions.push("a.publish_date <= ?");
+				queryParams.push(formattedEnd);
 			}
 		}
 		// 处理搜索关键词（搜索标题和内容）
