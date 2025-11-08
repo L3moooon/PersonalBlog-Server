@@ -11,10 +11,11 @@ exports.getAllMessage = async (req, res) => {
         m.content, 
         m.create_time,
         w.name, 
-        w.portrait
+        w.portrait,
+        w.address
       FROM 
         message m 
-        LEFT JOIN web_account w ON m.user_id = w.id 
+        LEFT JOIN web_account w ON m.user_id = w.identify
       ORDER BY 
         m.create_time DESC
     `;

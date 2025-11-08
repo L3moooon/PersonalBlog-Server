@@ -33,8 +33,8 @@ exports.getMusicList = async (req, res) => {
 		const countResult = await query(countSql, queryParams);
 		const total = countResult[0].total;
 		// 添加分页
-		sql += " LIMIT ?, ?";
-		queryParams.push(offset, parseInt(pageSize));
+		sql += " LIMIT ?,OFFSET ?";
+		queryParams.push(offset, parseInt(pageSize), offset);
 		const result = query(sql);
 		// 返回数据（包含分页信息）
 		return res.json({

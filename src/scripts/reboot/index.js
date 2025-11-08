@@ -11,7 +11,7 @@ const { query } = require("@config/db-util");
 
 let job = null;
 const rebootMark = path.join(__dirname, "logs", "server_reboot_mark");
-const rule = "0 3 * * 0";
+const rule = "30 3 * * *"; //每天凌晨3点
 // 确保 logs 目录存在（启动时检查）
 if (!fs.existsSync(path.join(__dirname, "logs"))) {
 	fs.mkdirSync(path.join(__dirname, "logs"), { recursive: true });
@@ -64,7 +64,7 @@ async function afterRebootJob() {
 		);
 		fs.unlinkSync(rebootMark); // 然后删除标记
 	} else {
-		console.log("非重启任务触发");
+		// console.log("非重启任务触发");
 	}
 }
 
@@ -83,5 +83,3 @@ if (process.argv.includes("--immediate")) {
 }
 
 module.exports = { startRebootJob, stopRebootJob, afterRebootJob };
-//cd /blog/server/PersonalBlog-Server
-// npm run reboot --immediate
