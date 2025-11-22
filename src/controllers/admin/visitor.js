@@ -3,16 +3,14 @@ const { query } = require("@config/db-util/index");
 //获取游客列表
 exports.getVisitorList = async (req, res) => {
 	try {
-		const {
-			pageNo = 1, // 页码，默认第1页
-			pageSize = 10, // 每页条数，默认10条
-		} = req.query;
+		const { pageNo = 1, pageSize = 10 } = req.query;
 
 		const page = parseInt(pageNo, 10);
 		const size = parseInt(pageSize, 10);
 
-		const offset = (page - 1) * size; // 计算分页偏移量
-		const sqlString = "SELECT * FROM web_account LIMIT ? OFFSET ?";
+		const offset = (page - 1) * size;
+		const sqlString =
+			"SELECT * FROM web_account ORDER BY last_login_time DESC LIMIT ? OFFSET ?";
 		const result = await query(sqlString, [size, offset]);
 		result.forEach((item) => {
 			if (item.address) {

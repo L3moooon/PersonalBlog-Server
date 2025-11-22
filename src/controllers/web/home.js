@@ -1,5 +1,5 @@
 //前台
-const { query, getConnection } = require("@config/db-util");
+const { query } = require("@config/db-util");
 
 // 网站上线时间戳（秒级）
 const ESTABLISHING_DATE = 1756111504; //2025/8/25 16:45:00

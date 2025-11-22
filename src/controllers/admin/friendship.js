@@ -1,8 +1,6 @@
-//文章评论
 const { query } = require("@config/db-util");
 
-//获取评论列表
-exports.getCommentPanel = async (req, res) => {
+exports.getFriendshipList = async (req, res) => {
 	try {
 		const { pageNo = 1, pageSize = 10 } = req.query;
 		// 转换分页参数为数字
@@ -16,27 +14,24 @@ exports.getCommentPanel = async (req, res) => {
 		) {
 			return res.json({ code: 0, msg: "分页参数格式错误" });
 		}
+
 		const offset = (currentPage - 1) * sizePerPage;
+		// SQL：查询当前用户的所有好友，关联好友的用户信息
 		const sqlString = `
-    SELECT 
-      c.*,
-      a.title,
-      u1.name AS user_name
-      FROM comment c 
-      JOIN article a ON c.article_id = a.id 
-      JOIN web_account u1 ON c.user_id = u1.id 
-      LEFT JOIN web_account u2 ON c.parent_id = u2.id
+      SELECT *
+      FROM friendship
+      ORDER BY apply_time DESC
       LIMIT ?, ?
     `;
+
+		// 执行查询，参数为当前用户ID
 		const result = await query(sqlString, [offset, sizePerPage]);
+		// 5. 查询总条数（用于计算总页数）
 		const countSql = `
-      SELECT COUNT(*) AS total 
-      FROM comment c 
-      JOIN article a ON c.article_id = a.id 
-      JOIN web_account u1 ON c.user_id = u1.id 
+      SELECT COUNT(*) AS total FROM friendship 
     `;
 		const totalResult = await query(countSql);
-		const total = totalResult[0].total;
+		const total = totalResult[0].total; // 总好友数
 		return res.json({
 			code: 1,
 			msg: "获取好友列表成功",
@@ -47,17 +42,6 @@ exports.getCommentPanel = async (req, res) => {
 				total, // 总条数
 			},
 		});
-	} catch (error) {
-		return res.send({ status: 0, message: error.message });
-	}
-};
-//删除评论
-exports.deleteComment = async (req, res) => {
-	try {
-		const { id } = req.body;
-		const sqlString = "DELETE FROM comment WHERE id=?";
-		await query(sqlString, [id]);
-		return res.send({ status: 1, message: "删除成功！" });
 	} catch (error) {
 		return res.send({ status: 0, message: error.message });
 	}

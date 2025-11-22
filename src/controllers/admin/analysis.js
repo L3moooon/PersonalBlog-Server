@@ -3,37 +3,85 @@ const { query } = require("@config/db-util");
 //滚动数字屏
 exports.getNumData = async (req, res) => {
 	try {
-		const sqlString = `
-    SELECT 
-      (SELECT CAST(SUM(visited_count) AS UNSIGNED) FROM web_account) AS total_visits,
-      (SELECT COUNT(*) FROM article) AS article_count,
-      (SELECT COUNT(*) FROM comment) AS comment_count,
-      (SELECT CAST(SUM(star) AS UNSIGNED) FROM article) AS star_count
-  `;
-		const result = await query(sqlString);
-		const data = result[0];
-		return res.send({
-			code: 1,
-			msg: "请求成功",
-			data: {
-				total_visits: data.total_visits,
-				article_count: data.article_count,
-				comment_count: data.comment_count,
-				star_count: data.star_count,
+		// 1. 获取今日日期（格式：YYYY-MM-DD）
+		const today = new Date().toISOString().split("T")[0];
+		// 2. 统计总数据 & 今日数据
+		// ------------------------
+		// 总访问量 + 今日访问量（从 web_account 的 visited_count 汇总）
+		const visitSql = `
+      SELECT 
+        SUM(visited_count) AS total_visit,
+        SUM(CASE WHEN DATE(last_login_time) = ? THEN 1 ELSE 0 END) AS today_visit
+      FROM web_account;
+    `;
+		const visitResult = await query(visitSql, [today]);
+
+		// 总文章量 + 今日发布文章数（从 article 表统计）
+		const articleSql = `
+      SELECT 
+        COUNT(id) AS total_article,
+        SUM(CASE WHEN DATE(publish_date) = ? THEN 1 ELSE 0 END) AS today_article
+      FROM article;
+    `;
+		const articleResult = await query(articleSql, [today]);
+
+		// 总评论量 + 今日评论数（从 comment 表统计）
+		const commentSql = `
+      SELECT 
+        COUNT(id) AS total_comment,
+        SUM(CASE WHEN DATE(comment_date) = ? THEN 1 ELSE 0 END) AS today_comment
+      FROM comment;
+    `;
+		const commentResult = await query(commentSql, [today]);
+
+		// 总点赞量 + 今日点赞数（从 user_like 表统计）
+		const likeSql = `
+      SELECT 
+        COUNT(user_id) AS total_like,
+        SUM(CASE WHEN DATE(time) = ? THEN 1 ELSE 0 END) AS today_like
+      FROM user_like;
+    `;
+		const likeResult = await query(likeSql, [today]);
+
+		// 3. 组装返回数据
+		const statsData = {
+			visit: {
+				today: visitResult[0].today_visit || 0,
+				total: visitResult[0].total_visit || 0,
 			},
+			article: {
+				today: articleResult[0].today_article || 0,
+				total: articleResult[0].total_article || 0,
+			},
+			comment: {
+				today: commentResult[0].today_comment || 0,
+				total: commentResult[0].total_comment || 0,
+			},
+			like: {
+				today: likeResult[0].today_like || 0,
+				total: likeResult[0].total_like || 0,
+			},
+		};
+
+		// 4. 返回结果
+		return res.json({
+			code: 1,
+			msg: "获取统计数据成功",
+			data: statsData,
 		});
 	} catch (error) {
-		return res.status(400).send({
+		return res.json({
 			code: 0,
-			msg: error.message,
+			message: "获取统计数据失败：" + error.message,
 		});
 	}
 };
-//直辖市等特殊情况
-const specialLocation = ["北京", "天津", "上海", "香港", "澳门"];
+
 //访客地图
 exports.getGeoData = async (req, res) => {
 	try {
+		//直辖市等特殊情况
+		const specialLocation = ["北京", "天津", "上海", "香港", "澳门"];
 		const sqlString = "SELECT address from web_account";
 		const result = await query(sqlString);
 		const geo = {};
@@ -67,7 +115,6 @@ exports.getLineData = async (req, res) => {
 	try {
 		const today = new Date();
 		const dateStr = today.toISOString().split("T")[0]; // 今日日期
-
 		// ==================== 1. 当天按小时统计（6:00-23:00）====================
 		const todayStart = new Date(today);
 		todayStart.setHours(6, 0, 0, 0);

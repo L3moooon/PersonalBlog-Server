@@ -2,52 +2,75 @@ const { query } = require("@config/db-util");
 
 exports.getMusicList = async (req, res) => {
 	try {
-		const {
-			pageNo = 1, // 页码，默认第1页
-			pageSize = 10, // 每页条数，默认10条
-			searchKey, // 搜索关键词
-		} = req.query;
-		const offset = (pageNo - 1) * pageSize; // 计算分页偏移量
-		let sql = `SELECT * FROM music m;`;
+		const { pageNo = 1, pageSize = 10, searchKey } = req.query;
 
-		// 条件部分
+		// 1. 分页参数转换与校验（避免非数字导致的计算错误）
+		const currentPage = Number(pageNo);
+		const sizePerPage = Number(pageSize);
+		if (
+			isNaN(currentPage) ||
+			isNaN(sizePerPage) ||
+			currentPage < 1 ||
+			sizePerPage < 1
+		) {
+			return res.json({ code: 0, msg: "分页参数格式错误，需为正整数" });
+		}
+		const offset = (currentPage - 1) * sizePerPage;
+
+		// 2. 构建 SQL 语句（初始语句不含分号，避免拼接错误）
+		let sql = "SELECT * FROM music m";
 		const whereConditions = [];
 		const queryParams = [];
 
-		// 处理搜索关键词（搜索标题和内容）
+		// 3. 处理搜索关键词（搜索歌名和歌手）
 		if (searchKey) {
 			whereConditions.push("(m.name LIKE ? OR m.author LIKE ?)");
 			const likeValue = `%${searchKey}%`;
-			queryParams.push(likeValue, likeValue);
+			queryParams.push(likeValue, likeValue); // 两个占位符对应两个参数
 		}
-		// 添加WHERE条件
+
+		// 4. 拼接 WHERE 条件
 		if (whereConditions.length > 0) {
 			sql += ` WHERE ${whereConditions.join(" AND ")}`;
 		}
-		// 分组
-		sql += " GROUP BY a.id";
-		// 获取总条数（用于分页）
-		const countSql = `SELECT COUNT(DISTINCT m.id) AS total FROM music m ${
-			whereConditions.length > 0 ? `WHERE ${whereConditions.join(" AND ")}` : ""
-		}`;
-		const countResult = await query(countSql, queryParams);
-		const total = countResult[0].total;
-		// 添加分页
-		sql += " LIMIT ?,OFFSET ?";
-		queryParams.push(offset, parseInt(pageSize), offset);
-		const result = query(sql);
-		// 返回数据（包含分页信息）
+
+		// 5. 如需去重，添加 GROUP BY（注意别名正确，这里用 m.id）
+		// 提示：如果 music 表无重复数据，可删除此句
+		sql += " GROUP BY m.id";
+
+		// 6. 拼接分页 LIMIT（注意参数顺序）
+		sql += " LIMIT ?, ?";
+		queryParams.push(offset, sizePerPage); // 仅添加偏移量和每页条数
+
+		// 7. 查询总条数（与列表查询条件一致，确保总数准确）
+		const countSql = `
+      SELECT COUNT(DISTINCT m.id) AS total 
+      FROM music m 
+      ${
+				whereConditions.length > 0
+					? `WHERE ${whereConditions.join(" AND ")}`
+					: ""
+			}
+      ${whereConditions.length > 0 ? "GROUP BY m.id" : ""}
+    `;
+		const countResult = await query(countSql, queryParams.slice(0, -2)); // 排除 LIMIT 参数
+		const total = countResult[0].total || 0;
+
+		// 8. 查询当前页数据（必须加 await，否则拿不到结果）
+		const result = await query(sql, queryParams);
+
+		// 9. 返回结果
 		return res.json({
 			code: 1,
 			msg: "请求成功！",
 			data: result,
 			pagination: {
 				total,
-				pageNo: parseInt(pageNo),
-				pageSize: parseInt(pageSize),
+				pageNo: currentPage,
+				pageSize: sizePerPage,
 			},
 		});
 	} catch (error) {
-		return res.send({ code: 0, message: error.message });
+		return res.json({ code: 0, message: error.message });
 	}
 };
