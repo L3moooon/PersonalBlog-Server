@@ -39,8 +39,8 @@ exports.login = async (req, res) => {
 				return res.json({ code: 0, msg: "用户名或密码错误" });
 			}
 		} else if (type == "email") {
-			const { email, captcha } = req.body;
-			if (!email || !captcha) {
+			const { email, verificationCode } = req.body;
+			if (!email || !verificationCode) {
 				return res.status(400).json({ code: 0, msg: "邮箱和验证码不能为空" });
 			}
 			loginAccount = email; // 记录登录账号（邮箱即账号）
@@ -51,7 +51,7 @@ exports.login = async (req, res) => {
 					.status(400)
 					.json({ code: 0, msg: "验证码已过期，请重新获取" });
 			}
-			if (storedCode !== captcha) {
+			if (storedCode !== verificationCode) {
 				return res.status(400).json({ code: 0, msg: "验证码不正确" });
 			}
 			// 验证码正确，执行登录逻辑
