@@ -33,7 +33,7 @@ exports.info = async (req, res) => {
 			},
 		});
 	} catch (error) {
-		return res.json({ status: 0, message: err.message });
+		return res.json({ status: 0, message: error.message });
 	}
 };
 
@@ -70,8 +70,8 @@ exports.theme = async (req, res) => {
 			msg: "请求成功！",
 			data: { ...result1[0], saying, url, bg_img },
 		});
-	} catch (err) {
-		return res.json({ status: 0, message: err.message });
+	} catch (error) {
+		return res.json({ status: 0, message: error.message });
 	}
 };
 

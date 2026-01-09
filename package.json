@@ -12,6 +12,8 @@
 	"author": "宵时雨",
 	"license": "ISC",
 	"dependencies": {
+		"@alicloud/dypnsapi20170525": "^2.0.0",
+		"@alicloud/sts-sdk": "^1.0.2",
 		"ali-oss": "^6.23.0",
 		"body-parser": "^1.20.3",
 		"cors": "^2.8.5",
