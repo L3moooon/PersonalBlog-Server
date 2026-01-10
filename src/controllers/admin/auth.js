@@ -93,6 +93,7 @@ exports.login = async (req, res) => {
 			loginAccount = phone; // 记录登录账号（手机号即账号）
 			// 从Redis获取存储的验证码
 			const result = await check(phone, verificationCode);
+			console.log(result);
 			if (!result) {
 				return res.status(200).json({ code: 10008, msg: "验证码错误" });
 			}
@@ -255,6 +256,7 @@ exports.getSmsCaptcha = async (req, res) => {
 			return res.status(400).json({ msg: "手机号不能为空" });
 		}
 		const result = await send(phone);
+		console.log(result);
 		if (result) {
 			res.json({ code: 1, msg: "验证码已发送到你的手机，请注意查收" });
 		} else {

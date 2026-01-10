@@ -4,8 +4,8 @@ const Util = require("@alicloud/tea-util");
 
 const createClient = () => {
 	let config = new OpenApi.Config({
-		accessKeyId: process.env.ACCESS_KEY_ID,
-		accessKeySecret: process.env.ACCESS_KEY_SECRET,
+		accessKeyId: process.env.ALI_ACCESS_KEY_ID,
+		accessKeySecret: process.env.ALI_ACCESS_KEY_SECRET,
 	});
 	config.endpoint = `dypnsapi.aliyuncs.com`;
 	return new Dypnsapi20170525.default(config);
@@ -26,8 +26,8 @@ exports.send = async (phoneNumber) => {
 			createVerifySchemeRequest,
 			new Util.RuntimeOptions({})
 		);
-		console.log(resp.body.code);
-		return resp.body.code.toLocaleLowerCase == "ok";
+		console.log(resp.body.code == "OK");
+		return resp.body.code == "OK";
 	} catch (error) {
 		console.log(error.message);
 		console.log(error.data["Recommend"]);
@@ -42,13 +42,12 @@ exports.check = async (phoneNumber, verifyCode) => {
 			phoneNumber,
 			verifyCode,
 		});
-	let runtime = new $Util.RuntimeOptions({});
 	try {
 		let resp = await client.checkSmsVerifyCodeWithOptions(
 			checkSmsVerifyCodeRequest,
-			runtime
+			new Util.RuntimeOptions({})
 		);
-		return resp.body.code.toLocaleLowerCase == "ok";
+		return resp.body.code == "OK";
 	} catch (error) {
 		console.log(error.message);
 		console.log(error.data["Recommend"]);
