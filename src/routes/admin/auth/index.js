@@ -4,6 +4,8 @@ const handler = require("@controllers/admin/auth");
 
 router.post("/login", handler.login); //管理员登录
 router.post("/register", handler.register); //管理员注册
+router.post("/forgetPassword", handler.forgetPassword); //忘记密码
+router.post("/resetPassword", handler.resetPassword); //重置密码
 router.post("/getEmailCaptcha", handler.getEmailCaptcha); //获取邮箱验证码
 router.post("/getSmsCaptcha", handler.getSmsCaptcha); //获取短信验证码
 
