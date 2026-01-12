@@ -2,10 +2,10 @@ const transporter = require("@config/mailer");
 
 const sender = "时雨博客 <1152818861@qq.com>";
 // 发送邮件
-async function sendMail(from = sender, to, subject, text, html) {
+async function sendMail(to, subject, text, html) {
 	try {
 		const info = await transporter.sendMail({
-			from,
+			from: sender,
 			to,
 			subject,
 			text,
