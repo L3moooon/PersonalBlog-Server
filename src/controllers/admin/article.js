@@ -208,7 +208,7 @@ exports.getTagList = async (req, res) => {
 	try {
 		const sqlString = "SELECT * FROM tag";
 		const data = await query(sqlString);
-		return res.send({ code: 0, msg: "请求成功", data });
+		return res.send({ code: 1, msg: "请求成功", data });
 	} catch (error) {
 		return res.status(400).send({ code: 0, msg: error.message });
 	}

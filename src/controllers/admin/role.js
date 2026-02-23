@@ -1,31 +1,32 @@
 const { query } = require("@config/db-util");
-// 新增或更新角色
-exports.addOrEditRole = async (req, res) => {
+// 新增角色
+exports.addRole = async (req, res) => {
 	try {
-		const { id, role_name, role_code, description } = req.body;
+		const { role_name, role_code, description } = req.body;
 		//更新角色
-		if (id) {
-			const sqlString = `
-        UPDATE admin_role 
-        SET role_name = ? , role_code = ? , description = ?, update_time = CURRENT_TIMESTAMP 
-        WHERE id = ?
-      `;
-			await query(sqlString, [role_name, role_code, description, id]);
-			return res.send({ status: 1, message: "角色更新成功" });
-		}
-		//新增角色
-		else {
-			// if (!role_name || !role_code) {
-			//   return res.send({ status: 0, message: '角色名称和角色编码不能为空' })
-			// }
-			const sqlString = `
+		const sqlString = `
         INSERT INTO admin_role 
           (role_name, role_code, description, create_time, update_time) 
         VALUES (?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
       `;
-			await query(sqlString, [role_name, role_code, description]);
-			return res.send({ status: 1, message: "角色添加成功" });
-		}
+		await query(sqlString, [role_name, role_code, description]);
+		return res.send({ status: 1, message: "角色添加成功" });
+	} catch (error) {
+		return res.send({ code: 0, message: error.message });
+	}
+};
+
+//更新角色
+exports.updateRole = async (req, res) => {
+	try {
+		const { id, role_name, role_code, description } = req.body;
+		const sqlString = `
+      UPDATE admin_role 
+      SET role_name = ? , role_code = ? , description = ?, update_time = CURRENT_TIMESTAMP 
+      WHERE id = ?
+    `;
+		await query(sqlString, [role_name, role_code, description, id]);
+		return res.send({ status: 1, message: "角色更新成功" });
 	} catch (error) {
 		return res.send({ code: 0, message: error.message });
 	}

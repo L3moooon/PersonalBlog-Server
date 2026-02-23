@@ -51,6 +51,49 @@ exports.getCommentPanel = async (req, res) => {
 		return res.send({ status: 0, message: error.message });
 	}
 };
+
+//更新评论
+exports.updateComment = async (req, res) => {
+	try {
+		const { id, ...otherFields } = req.body;
+		if (!id) {
+			return res.status(400).send({ code: 0, msg: "评论ID不能为空" });
+		}
+		const allowFields = [
+			"content",
+			"status",
+			"top",
+			"parent_id",
+			"article_id",
+			"user_id",
+		];
+		const [updateFields, updateValues] = Object.entries(otherFields)
+			.filter(([key]) => allowFields.includes(key))
+			.reduce(
+				([fields, values], [key, value]) => {
+					fields.push(`${key} = ?`);
+					values.push(value);
+					return [fields, values];
+				},
+				[[], []],
+			);
+		updateValues.push(id); // WHERE条件的id
+		if ("content" in otherFields) {
+			updateFields.push("last_edit_date = CURRENT_TIMESTAMP");
+		}
+		// 执行评论更新
+		const sqlString1 = `UPDATE comment SET ${updateFields.join(
+			", ",
+		)} WHERE id = ?`;
+		console.log(sqlString1);
+		console.log(updateFields, updateValues);
+
+		await query(sqlString1, updateValues);
+		return res.send({ code: 1, msg: "修改成功！" });
+	} catch (error) {
+		return res.send({ code: 0, msg: error.message });
+	}
+};
 //删除评论
 exports.deleteComment = async (req, res) => {
 	try {

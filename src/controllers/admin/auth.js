@@ -23,11 +23,14 @@ exports.login = async (req, res) => {
 			const sqlStringl = `
         SELECT 
           a.id as user_id, 
+          a.account,
+          a.avatar,
           a.name,
           p.permission_type,
           p.path,
           p.component,
-          p.permission_code
+          p.permission_code,
+          r.role_name
         FROM admin_account a
         LEFT JOIN account_role_relation ar ON a.id = ar.user_id
         LEFT JOIN admin_role r ON ar.role_id = r.id
@@ -72,11 +75,14 @@ exports.login = async (req, res) => {
 			const sqlStringl = `
           SELECT 
             a.id as user_id, 
+            a.account,
+            a.avatar,
             a.name,
             p.permission_type,
             p.path,
             p.component,
-            p.permission_code
+            p.permission_code,
+            r.role_name
           FROM admin_account a
           LEFT JOIN account_role_relation ar ON a.id = ar.user_id
           LEFT JOIN admin_role r ON ar.role_id = r.id
@@ -113,11 +119,14 @@ exports.login = async (req, res) => {
 			const sqlStringl = `
           SELECT 
             a.id as user_id, 
+            a.account,
+            a.avatar,
             a.name,
             p.permission_type,
             p.path,
             p.component,
-            p.permission_code
+            p.permission_code,
+            r.role_name
           FROM admin_account a
           LEFT JOIN account_role_relation ar ON a.id = ar.user_id
           LEFT JOIN admin_role r ON ar.role_id = r.id
@@ -133,7 +142,7 @@ exports.login = async (req, res) => {
 		if (!userInfo || userInfo.length === 0) {
 			return res.status(200).json({ code: 0, msg: "获取用户信息失败" });
 		}
-		const { user_id, name } = userInfo[0];
+		const { user_id, account, avatar, name, role_name } = userInfo[0];
 		const permission = {
 			routeKeys: [],
 			componentKeys: [],
@@ -178,6 +187,9 @@ exports.login = async (req, res) => {
 			token,
 			user: {
 				name,
+				role_name,
+				account,
+				avatar,
 				permission,
 			},
 		});

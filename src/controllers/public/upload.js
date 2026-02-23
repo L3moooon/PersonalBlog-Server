@@ -53,33 +53,41 @@
 // 		});
 // 	}
 // };
-const StsClient = require("@alicloud/sts-sdk");
-// 创建STS客户端
-const sts = new StsClient({
-	endpoint: "sts.aliyuncs.com",
-	accessKeyId: process.env.ALI_ACCESS_KEY_ID,
-	accessKeySecret: process.env.ALI_ACCESS_KEY_SECRET,
-});
+
+// const StsClient = require("@alicloud/sts-sdk");
+// // 创建STS客户端
+// const sts = new StsClient({
+// 	endpoint: "sts.aliyuncs.com",
+// 	accessKeyId: process.env.ALI_ROLE_ACCESS_KEY_ID,
+// 	accessKeySecret: process.env.ALI_ROLE_ACCESS_KEY_SECRET,
+// });
+
+const { STS } = require("ali-oss");
 exports.getStsToken = async (req, res) => {
+	const sts = new STS({
+		accessKeyId: process.env.ALI_ROLE_ACCESS_KEY_ID,
+		accessKeySecret: process.env.ALI_ROLE_ACCESS_KEY_SECRET,
+	});
 	const roleArn = process.env.ALI_ROLE_ARN; // 角色ARN
 	const roleSessionName = "upload"; // 角色会话名称
 	const durationSeconds = 1800; // 角色会话过期时间
-	const policy = ""; // 权限策略
+	const policy = "";
 	try {
 		const result = await sts.assumeRole(
 			roleArn,
-			roleSessionName,
+			policy,
 			durationSeconds,
-			policy
+			roleSessionName
 		);
+		// console.log(result);
 		return res.json({
 			code: 1,
 			message: "获取 STS Token 成功",
 			data: {
-				accessKeyId: result.Credentials.AccessKeyId,
-				accessKeySecret: result.Credentials.AccessKeySecret,
-				securityToken: result.Credentials.SecurityToken,
-				expiration: result.Credentials.Expiration,
+				accessKeyId: result.credentials.AccessKeyId,
+				accessKeySecret: result.credentials.AccessKeySecret,
+				securityToken: result.credentials.SecurityToken,
+				expiration: result.credentials.Expiration,
 				region: "oss-cn-beijing",
 			},
 		});
